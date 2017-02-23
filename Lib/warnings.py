@@ -130,7 +130,7 @@ def filterwarnings(action, message="", category=Warning, module="", lineno=0,
     """
     import re
     assert action in ("error", "ignore", "always", "default", "module",
-                      "once"), "invalid action: %r" % (action,)
+                      "once", "stack"), "invalid action: %r" % (action,)
     assert isinstance(message, str), "message must be a string"
     assert isinstance(category, type), "category must be a class"
     assert issubclass(category, Warning), "category must be a Warning subclass"
@@ -151,7 +151,7 @@ def simplefilter(action, category=Warning, lineno=0, append=False):
     'append' -- if true, append to the list of filters
     """
     assert action in ("error", "ignore", "always", "default", "module",
-                      "once"), "invalid action: %r" % (action,)
+                      "once", "stack"), "invalid action: %r" % (action,)
     assert isinstance(lineno, int) and lineno >= 0, \
            "lineno must be an int >= 0"
     _add_filter(action, None, category, None, lineno, append=append)
@@ -363,8 +363,13 @@ def warn_explicit(message, category, filename, lineno,
 
     if action == "error":
         raise message
+    if action == "stack":
+        import traceback
+        import sys
+        f = sys._getframe().f_back.f_back
+        traceback.print_stack(f=f)
     # Other actions
-    if action == "once":
+    elif action == "once":
         registry[key] = 1
         oncekey = (text, category)
         if onceregistry.get(oncekey):
