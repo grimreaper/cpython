@@ -832,6 +832,15 @@ argument to generate a compressed archive.  A command line option
 (Contributed by Zhiming Wang in :issue:`31638`.)
 
 
+sqlite3
+-----------
+
+The :class:`sqlite3.Connection` now has the :meth:`sqlite3.Connection.open_blob`
+method. The :class:`sqlite3.Blob` allows incremental I/O operations to blobs.
+(Contributed by Aviv Palivoda in :issue:`24905`)
+
+
+
 Optimizations
 =============
 
