@@ -737,6 +737,16 @@ bits_in_digit(digit d)
     return d_bits;
 }
 
+static int
+popcount_digit(digit d)
+{
+    /* 32bit SWAR popcount. */
+    d -= (d >> 1) & 0x55555555;
+    d = (d & 0x33333333) + ((d >> 2) & 0x33333333);
+    d = (d + (d >> 4)) & 0x0f0f0f0f;
+    return (d * 0x01010101) >> 24;
+}
+
 size_t
 _PyLong_NumBits(PyObject *vv)
 {
@@ -5168,6 +5178,56 @@ int_bit_length_impl(PyObject *self)
     return NULL;
 }
 
+/*[clinic input]
+int.bit_count
+
+Number of ones in the binary representation of self.
+
+>>> bin(13)
+'0b1101'
+>>> (13).bit_count()
+3
+[clinic start generated code]*/
+
+static PyObject *
+int_bit_count_impl(PyObject *self)
+/*[clinic end generated code: output=2e571970daf1e5c3 input=a428900d3e39a606]*/
+{
+    Py_ssize_t ndigits, i, bit_count = 0;
+    PyLongObject *result, *x, *y;
+
+    assert(self != NULL);
+    assert(PyLong_Check(self));
+
+    ndigits = Py_ABS(Py_SIZE(self));
+
+    for (i = 0; i < ndigits && i < PY_SSIZE_T_MAX/PyLong_SHIFT; i++)
+        bit_count += popcount_digit(((PyLongObject *)self)->ob_digit[i]);
+
+    result = (PyLongObject *)PyLong_FromSsize_t(bit_count);
+    if (result == NULL)
+        return NULL;
+
+    /* Use Python integers if bit_count would overflow. */
+    for (; i < ndigits; i++) {
+        x = (PyLongObject *)PyLong_FromLong(popcount_digit(((PyLongObject *)self)->ob_digit[i]));
+        if (x == NULL)
+            goto error;
+        y = (PyLongObject *)long_add(result, x);
+        Py_DECREF(x);
+        if (y == NULL)
+            goto error;
+        Py_DECREF(result);
+        result = y;
+    }
+
+    return (PyObject *)result;
+
+  error:
+    Py_DECREF(result);
+    return NULL;
+}
+
 #if 0
 static PyObject *
 long_is_finite(PyObject *v)
@@ -5296,6 +5356,7 @@ static PyMethodDef long_methods[] = {
     {"conjugate",       (PyCFunction)long_long, METH_NOARGS,
      "Returns self, the complex conjugate of any int."},
     INT_BIT_LENGTH_METHODDEF
+    INT_BIT_COUNT_METHODDEF
 #if 0
     {"is_finite",       (PyCFunction)long_is_finite,    METH_NOARGS,
      "Returns always True."},
