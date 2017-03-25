@@ -109,7 +109,6 @@ Common limits of Windows event loops:
 
 :class:`ProactorEventLoop` specific limits:
 
-- :meth:`~AbstractEventLoop.create_datagram_endpoint` (UDP) is not supported
 - :meth:`~AbstractEventLoop.add_reader` and :meth:`~AbstractEventLoop.add_writer` are
   not supported
 
