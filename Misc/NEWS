@@ -306,6 +306,10 @@ Extension Modules
 
 Library
 -------
+- bpo-16379: Add sqlite error code and name to the exceptions of the
+  sqlite3 module.
+  Patch by Aviv Palivoda based on work by Daniel Shahaf.
+
 - bpo-29692: Fixed arbitrary unchaining of RuntimeError exceptions in 
   contextlib.contextmanager.
   Patch by Siddharth Velankar.
