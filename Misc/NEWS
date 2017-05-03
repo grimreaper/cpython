@@ -317,6 +317,9 @@ Extension Modules
 Library
 -------
 
+- bpo-30262: The Cache and Statement objects of the sqlite3 module
+  are not exposed to the user.  Patch by Aviv Palivoda.
+
 - bpo-30205: Fix getsockname() for unbound AF_UNIX sockets on Linux.
 
 - bpo-30228: The seek() and tell() methods of io.FileIO now set the internal
