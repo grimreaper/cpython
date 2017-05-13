@@ -376,6 +376,14 @@ class RegressionTests(unittest.TestCase):
                 counter += 1
         self.assertEqual(counter, 3, "should have returned exactly three rows")
 
+    def CheckCacheDeprecationWarning(self):
+        with self.assertWarns(DeprecationWarning):
+            sqlite.Cache(int)
+
+    def CheckStatementDeprecationWarning(self):
+        with self.assertWarns(DeprecationWarning):
+            sqlite.Statement()
+
 
 def suite():
     regression_suite = unittest.makeSuite(RegressionTests, "Check")
