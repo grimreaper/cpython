@@ -1799,7 +1799,7 @@ class TestCopyFile(unittest.TestCase):
         self._delete = True
 
     def test_w_source_open_fails(self):
-        def _open(filename, mode='r'):
+        def _open(filename, mode='r', opener=None):
             if filename == 'srcfile':
                 raise OSError('Cannot open "srcfile"')
             assert 0  # shouldn't reach here.
@@ -1813,7 +1813,7 @@ class TestCopyFile(unittest.TestCase):
 
         srcfile = self.Faux()
 
-        def _open(filename, mode='r'):
+        def _open(filename, mode='r', opener=None):
             if filename == 'srcfile':
                 return srcfile
             if filename == 'destfile':
@@ -1834,7 +1834,7 @@ class TestCopyFile(unittest.TestCase):
         srcfile = self.Faux()
         destfile = self.Faux(True)
 
-        def _open(filename, mode='r'):
+        def _open(filename, mode='r', opener=None):
             if filename == 'srcfile':
                 return srcfile
             if filename == 'destfile':
@@ -1857,7 +1857,7 @@ class TestCopyFile(unittest.TestCase):
         srcfile = self.Faux(True)
         destfile = self.Faux()
 
-        def _open(filename, mode='r'):
+        def _open(filename, mode='r', opener=None):
             if filename == 'srcfile':
                 return srcfile
             if filename == 'destfile':
