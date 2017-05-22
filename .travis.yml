@@ -81,7 +81,7 @@ before_script:
 
 script:
   # `-r -w` implicitly provided through `make buildbottest`.
-  - make buildbottest TESTOPTS="-j4"
+  - make buildbottest TESTOPTS="-j4 -v"
 
 notifications:
   email: false
