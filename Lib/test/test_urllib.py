@@ -303,11 +303,11 @@ class urlopen_HttpTests(unittest.TestCase, FakeHTTPMixin, FakeFTPMixin):
     def check_read(self, ver):
         self.fakehttp(b"HTTP/" + ver + b" 200 OK\r\n\r\nHello!")
         try:
-            fp = urlopen("http://python.org/")
-            self.assertEqual(fp.readline(), b"Hello!")
-            self.assertEqual(fp.readline(), b"")
-            self.assertEqual(fp.geturl(), 'http://python.org/')
-            self.assertEqual(fp.getcode(), 200)
+            with urlopen("http://python.org/") as fp:
+                self.assertEqual(fp.readline(), b"Hello!")
+                self.assertEqual(fp.readline(), b"")
+                self.assertEqual(fp.geturl(), 'http://python.org/')
+                self.assertEqual(fp.getcode(), 200)
         finally:
             self.unfakehttp()
 
@@ -324,8 +324,8 @@ class urlopen_HttpTests(unittest.TestCase, FakeHTTPMixin, FakeFTPMixin):
     def test_willclose(self):
         self.fakehttp(b"HTTP/1.1 200 OK\r\n\r\nHello!")
         try:
-            resp = urlopen("http://www.python.org")
-            self.assertTrue(resp.fp.will_close)
+            with urlopen("http://www.python.org") as resp:
+                self.assertTrue(resp.fp.will_close)
         finally:
             self.unfakehttp()
 
@@ -364,8 +364,9 @@ Content-Type: text/html; charset=iso-8859-1
 ''')
         try:
             msg = "Redirection to url 'file:"
-            with self.assertRaisesRegex(urllib.error.HTTPError, msg):
+            with self.assertRaisesRegex(urllib.error.HTTPError, msg) as e:
                 urlopen("http://python.org/")
+            e.exception.close()
         finally:
             self.unfakehttp()
 
@@ -378,8 +379,9 @@ Location: file://guidocomputer.athome.com:/python/license
 Connection: close
 ''')
             try:
-                self.assertRaises(urllib.error.HTTPError, urlopen,
-                    "http://something")
+                with self.assertRaises(urllib.error.HTTPError) as e:
+                    urlopen("http://something")
+                e.exception.close()
             finally:
                 self.unfakehttp()
 
@@ -431,18 +433,19 @@ Connection: close
         self.fakeftp()
         try:
             urllib.request.ftpcache['test'] = urllib.request.ftpwrapper('user', 'pass', 'localhost', 21, [])
-            urlopen('ftp://localhost')
+            with urlopen('ftp://localhost'):
+                pass
         finally:
             self.unfakeftp()
 
     def test_userpass_inurl(self):
         self.fakehttp(b"HTTP/1.0 200 OK\r\n\r\nHello!")
         try:
-            fp = urlopen("http://user:pass@python.org/")
-            self.assertEqual(fp.readline(), b"Hello!")
-            self.assertEqual(fp.readline(), b"")
-            self.assertEqual(fp.geturl(), 'http://user:pass@python.org/')
-            self.assertEqual(fp.getcode(), 200)
+            with urlopen("http://user:pass@python.org/") as fp:
+                self.assertEqual(fp.readline(), b"Hello!")
+                self.assertEqual(fp.readline(), b"")
+                self.assertEqual(fp.geturl(), 'http://user:pass@python.org/')
+                self.assertEqual(fp.getcode(), 200)
         finally:
             self.unfakehttp()
 
@@ -454,14 +457,14 @@ Connection: close
             fakehttp_wrapper = http.client.HTTPConnection
             authorization = ("Authorization: Basic %s\r\n" %
                              b64encode(userpass.encode("ASCII")).decode("ASCII"))
-            fp = urlopen(url)
-            # The authorization header must be in place
-            self.assertIn(authorization, fakehttp_wrapper.buf.decode("UTF-8"))
-            self.assertEqual(fp.readline(), b"Hello!")
-            self.assertEqual(fp.readline(), b"")
-            # the spaces are quoted in URL so no match
-            self.assertNotEqual(fp.geturl(), url)
-            self.assertEqual(fp.getcode(), 200)
+            with urlopen(url) as fp:
+                # The authorization header must be in place
+                self.assertIn(authorization, fakehttp_wrapper.buf.decode("UTF-8"))
+                self.assertEqual(fp.readline(), b"Hello!")
+                self.assertEqual(fp.readline(), b"")
+                # the spaces are quoted in URL so no match
+                self.assertNotEqual(fp.geturl(), url)
+                self.assertEqual(fp.getcode(), 200)
         finally:
             self.unfakehttp()
 
@@ -510,6 +513,11 @@ class urlopen_DataTests(unittest.TestCase):
             self.text_url_base64)
         self.image_url_resp = urllib.request.urlopen(self.image_url)
 
+    def tearDown(self):
+        self.text_url_resp.close()
+        self.text_url_base64_resp.close()
+        self.image_url_resp.close()
+
     def test_interface(self):
         # Make sure object returned by urlopen() has the specified methods
         for attr in ("read", "readline", "readlines",
@@ -524,8 +532,9 @@ class urlopen_DataTests(unittest.TestCase):
             [('text/plain', ''), ('charset', 'ISO-8859-1')])
         self.assertEqual(self.image_url_resp.info()['content-length'],
             str(len(self.image)))
-        self.assertEqual(urllib.request.urlopen("data:,").info().get_params(),
-            [('text/plain', ''), ('charset', 'US-ASCII')])
+        with urllib.request.urlopen("data:,") as r:
+            self.assertEqual(r.info().get_params(),
+                [('text/plain', ''), ('charset', 'US-ASCII')])
 
     def test_geturl(self):
         self.assertEqual(self.text_url_resp.geturl(), self.text_url)
