@@ -108,6 +108,7 @@ class EditorWindow(object):
                 'recent-files.lst')
         self.text_frame = text_frame = Frame(top)
         self.vbar = vbar = Scrollbar(text_frame, name='vbar')
+        self.hbar = hbar = Scrollbar(text_frame, orient="horizontal", name='hbar')
         self.width = idleConf.GetOption('main', 'EditorWindow',
                                         'width', type='int')
         text_options = {
@@ -188,6 +189,9 @@ class EditorWindow(object):
         vbar['command'] = text.yview
         vbar.pack(side=RIGHT, fill=Y)
         text['yscrollcommand'] = vbar.set
+        hbar['command'] = text.xview
+        hbar.pack(side='bottom', fill='x')
+        text['xscrollcommand'] = hbar.set
         text['font'] = idleConf.GetFont(self.root, 'main', 'EditorWindow')
         text_frame.pack(side=LEFT, fill=BOTH, expand=1)
         text.pack(side=TOP, fill=BOTH, expand=1)
