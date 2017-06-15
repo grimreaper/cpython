@@ -128,6 +128,13 @@ provide the public methods described below.
    Otherwise (*block* is false), return an item if one is immediately available,
    else raise the :exc:`Empty` exception (*timeout* is ignored in that case).
 
+   .. warning::
+
+      When *block* is true and *timeout* is ``None``, this operation goes into
+      an uninterruptible wait on an underlying lock. This means that no
+      exceptions can occur, and in particular a SIGINT will not trigger a
+      ``KeyboardInterrupt``.
+
 
 .. method:: Queue.get_nowait()
 
