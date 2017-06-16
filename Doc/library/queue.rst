@@ -130,10 +130,12 @@ provide the public methods described below.
 
    .. warning::
 
-      When *block* is true and *timeout* is ``None``, this operation goes into
-      an uninterruptible wait on an underlying lock. This means that no
-      exceptions can occur, and in particular a SIGINT will not trigger a
-      ``KeyboardInterrupt``.
+      Prior to 3.0 on POSIX systems, and for all versions on Windows, if
+      *block* is true and *timeout* is ``None``, this operation goes into
+      an uninterruptible wait on an underlying lock.
+
+      This means that no exceptions can occur, and in particular a SIGINT will
+      not trigger a ``KeyboardInterrupt``.
 
 
 .. method:: Queue.get_nowait()
