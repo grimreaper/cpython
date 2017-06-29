@@ -1504,6 +1504,8 @@ property_init_impl(propertyobject *self, PyObject *fget, PyObject *fset,
                    PyObject *fdel, PyObject *doc)
 /*[clinic end generated code: output=01a960742b692b57 input=dfb5dbbffc6932d5]*/
 {
+    _Py_IDENTIFIER(__doc__);
+
     if (fget == Py_None)
         fget = NULL;
     if (fset == Py_None)
@@ -1524,30 +1526,28 @@ property_init_impl(propertyobject *self, PyObject *fget, PyObject *fset,
 
     /* if no docstring given and the getter has one, use that one */
     if ((doc == NULL || doc == Py_None) && fget != NULL) {
-        _Py_IDENTIFIER(__doc__);
         PyObject *get_doc = _PyObject_GetAttrId(fget, &PyId___doc__);
         if (get_doc) {
-            if (Py_TYPE(self) == &PyProperty_Type) {
-                Py_XSETREF(self->prop_doc, get_doc);
-            }
-            else {
-                /* If this is a property subclass, put __doc__
-                in dict of the subclass instance instead,
-                otherwise it gets shadowed by __doc__ in the
-                class's dict. */
-                int err = _PyObject_SetAttrId((PyObject *)self, &PyId___doc__, get_doc);
-                Py_DECREF(get_doc);
-                if (err < 0)
-                    return -1;
-            }
+            Py_XSETREF(self->prop_doc, get_doc);
             self->getter_doc = 1;
         }
         else if (PyErr_ExceptionMatches(PyExc_Exception)) {
             PyErr_Clear();
         }
         else {
+            Py_DECREF(get_doc);
             return -1;
         }
+    }
+
+    /* If this is a property subclass, put __doc__ in dict of the subclass
+       instance as well, otherwise it gets shadowed by __doc__ in the
+       class's dict. */
+    if (Py_TYPE(self) != &PyProperty_Type) {
+        int err = _PyObject_SetAttrId((PyObject *)self, &PyId___doc__,
+                                      self->prop_doc);
+        if (err < 0)
+            return -1;
     }
 
     return 0;
