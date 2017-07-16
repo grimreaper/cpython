@@ -55,7 +55,7 @@ class CfgParserTestCaseClass:
             dict_type=self.dict_type,
             strict=self.strict,
             default_section=self.default_section,
-            interpolation=self.interpolation,
+            interpolation=self.interpolation
         )
         instance = self.config_class(**arguments)
         return instance
@@ -1529,8 +1529,8 @@ class ReadFileTestCase(unittest.TestCase):
             parser.read_file(lines, source=b"badbad")
         self.assertEqual(
             str(dse.exception),
-            "File contains no section headers.\nfile: b'badbad', line: 1\n"
-            "'[badbad'"
+            "File do not start with a section header.\n"
+            "file: b'badbad', line: 1\n'[badbad'"
         )
 
 
@@ -2090,6 +2090,54 @@ class MiscTestCase(unittest.TestCase):
     def test__all__(self):
         blacklist = {"Error"}
         support.check__all__(self, configparser, blacklist=blacklist)
+
+
+class SectionlessTestCase(unittest.TestCase):
+
+    def fromstring(self, string):
+        cfg = configparser.ConfigParser(allow_unnamed_section=True)
+        cfg.read_string(string)
+        return cfg
+
+    def test_no_first_section(self):
+        cfg1 = self.fromstring("""
+        a = 1
+        b = 2
+        [sect1]
+        c = 3
+        """)
+
+        self.assertEqual(set(['', 'sect1']), set(cfg1.sections()))
+        self.assertEqual('1', cfg1['']['a'])
+        self.assertEqual('2', cfg1['']['b'])
+        self.assertEqual('3', cfg1['sect1']['c'])
+
+        output = io.StringIO()
+        cfg1.write(output)
+        cfg2 = self.fromstring(output.getvalue())
+
+        self.assertEqual(set(['', 'sect1']), set(cfg2.sections()))
+        self.assertEqual('1', cfg2['']['a'])
+        self.assertEqual('2', cfg2['']['b'])
+        self.assertEqual('3', cfg2['sect1']['c'])
+
+    def test_no_section(self):
+        cfg1 = self.fromstring("""
+        a = 1
+        b = 2
+        """)
+
+        self.assertEqual([''], cfg1.sections())
+        self.assertEqual('1', cfg1['']['a'])
+        self.assertEqual('2', cfg1['']['b'])
+
+        output = io.StringIO()
+        cfg1.write(output)
+        cfg2 = self.fromstring(output.getvalue())
+
+        self.assertEqual([''], cfg2.sections())
+        self.assertEqual('1', cfg2['']['a'])
+        self.assertEqual('2', cfg2['']['b'])
 
 
 if __name__ == '__main__':

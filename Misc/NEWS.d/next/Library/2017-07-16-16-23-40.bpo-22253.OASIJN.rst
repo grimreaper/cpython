@@ -1,0 +1,4 @@
+Add support to files that have key-value pairs before any section or no section
+at all. Unnamed sections are enabled when passing `allow_unnamed_section=True`
+to `configparser.ConfigParser` and are stored as an empty string.
+Patch by Pedro Lacerda.

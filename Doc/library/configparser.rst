@@ -1307,8 +1307,7 @@ Exceptions
 
 .. exception:: MissingSectionHeaderError
 
-   Exception raised when attempting to parse a file which has no section
-   headers.
+   Exception raised when a key-value pair is found before any section header.
 
 
 .. exception:: ParsingError

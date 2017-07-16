@@ -18,7 +18,8 @@ ConfigParser -- responsible for parsing a list of
              delimiters=('=', ':'), comment_prefixes=('#', ';'),
              inline_comment_prefixes=None, strict=True,
              empty_lines_in_values=True, default_section='DEFAULT',
-             interpolation=<unset>, converters=<unset>):
+             interpolation=<unset>, converters=<unset>,
+             allow_unnamed_section=False):
         Create the parser. When `defaults' is given, it is initialized into the
         dictionary or intrinsic defaults. The keys must be strings, the values
         must be appropriate for %()s string interpolation.
@@ -66,6 +67,9 @@ ConfigParser -- responsible for parsing a list of
         implementing the conversion from string to the desired datatype. Every
         converter gets its corresponding get*() method on the parser object and
         section proxies.
+
+        When `allow_unnamed_section` is True (default: False), options
+        without section are accepted: the section for these is ''.
 
     sections()
         Return all the configuration section names, sans DEFAULT.
@@ -342,8 +346,8 @@ class MissingSectionHeaderError(ParsingError):
     def __init__(self, filename, lineno, line):
         Error.__init__(
             self,
-            'File contains no section headers.\nfile: %r, line: %d\n%r' %
-            (filename, lineno, line))
+            'File do not start with a section header.'
+            '\nfile: %r, line: %d\n%r' % (filename, lineno, line))
         self.source = filename
         self.lineno = lineno
         self.line = line
@@ -602,7 +606,8 @@ class RawConfigParser(MutableMapping):
                  comment_prefixes=('#', ';'), inline_comment_prefixes=None,
                  strict=True, empty_lines_in_values=True,
                  default_section=DEFAULTSECT,
-                 interpolation=_UNSET, converters=_UNSET):
+                 interpolation=_UNSET, converters=_UNSET,
+                 allow_unnamed_section=False):
 
         self._dict = dict_type
         self._sections = self._dict()
@@ -637,6 +642,7 @@ class RawConfigParser(MutableMapping):
             self._interpolation = Interpolation()
         if converters is not _UNSET:
             self._converters.update(converters)
+        self._allow_unnamed_section = allow_unnamed_section
 
     def defaults(self):
         return self._defaults
@@ -877,7 +883,7 @@ class RawConfigParser(MutableMapping):
         """Check for the existence of a given option in a given section.
         If the specified `section' is None or an empty string, DEFAULT is
         assumed. If the specified `section' does not exist, returns False."""
-        if not section or section == self.default_section:
+        if (not section  and section != '') or section == self.default_section:
             option = self.optionxform(option)
             return option in self._defaults
         elif section not in self._sections:
@@ -892,7 +898,7 @@ class RawConfigParser(MutableMapping):
         if value:
             value = self._interpolation.before_set(self, section, option,
                                                    value)
-        if not section or section == self.default_section:
+        if (not section and section != '') or section == self.default_section:
             sectdict = self._defaults
         else:
             try:
@@ -914,13 +920,18 @@ class RawConfigParser(MutableMapping):
         if self._defaults:
             self._write_section(fp, self.default_section,
                                     self._defaults.items(), d)
+        if '' in self._sections:
+            self._write_section(fp, '', self._sections[''].items(), d, unnamed=True)
         for section in self._sections:
+            if section == '':
+                continue
             self._write_section(fp, section,
                                 self._sections[section].items(), d)
 
-    def _write_section(self, fp, section_name, section_items, delimiter):
+    def _write_section(self, fp, section_name, section_items, delimiter, unnamed=False):
         """Write a single section to the specified `fp'."""
-        fp.write("[{}]\n".format(section_name))
+        if not unnamed:
+            fp.write("[{}]\n".format(section_name))
         for key, value in section_items:
             value = self._interpolation.before_write(self, section_name, key,
                                                      value)
@@ -933,7 +944,7 @@ class RawConfigParser(MutableMapping):
 
     def remove_option(self, section, option):
         """Remove an option."""
-        if not section or section == self.default_section:
+        if (not section and section != '') or section == self.default_section:
             sectdict = self._defaults
         else:
             try:
@@ -1055,6 +1066,13 @@ class RawConfigParser(MutableMapping):
                 cursect[optname].append(value)
             # a section header or option header?
             else:
+                if self._allow_unnamed_section and cursect is None:
+                    sectname = ''
+                    cursect = self._dict()
+                    self._sections[sectname] = cursect
+                    self._proxies[sectname] = SectionProxy(self, sectname)
+                    elements_added.add(sectname)
+
                 indent_level = cur_indent_level
                 # is it a section header?
                 mo = self.SECTCRE.match(value)
@@ -1075,7 +1093,7 @@ class RawConfigParser(MutableMapping):
                         elements_added.add(sectname)
                     # So sections can't start with a continuation line
                     optname = None
-                # no section header in the file?
+                # no section header?
                 elif cursect is None:
                     raise MissingSectionHeaderError(fpname, lineno, line)
                 # an option line?
