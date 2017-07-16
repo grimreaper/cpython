@@ -883,7 +883,7 @@ class RawConfigParser(MutableMapping):
         """Check for the existence of a given option in a given section.
         If the specified `section' is None or an empty string, DEFAULT is
         assumed. If the specified `section' does not exist, returns False."""
-        if (not section  and section != '') or section == self.default_section:
+        if (not section and section != '') or section == self.default_section:
             option = self.optionxform(option)
             return option in self._defaults
         elif section not in self._sections:
