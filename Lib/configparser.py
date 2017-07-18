@@ -346,7 +346,7 @@ class MissingSectionHeaderError(ParsingError):
     def __init__(self, filename, lineno, line):
         Error.__init__(
             self,
-            'File do not start with a section header.'
+            'File does not start with a section header.'
             '\nfile: %r, line: %d\n%r' % (filename, lineno, line))
         self.source = filename
         self.lineno = lineno
