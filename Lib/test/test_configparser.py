@@ -1529,7 +1529,7 @@ class ReadFileTestCase(unittest.TestCase):
             parser.read_file(lines, source=b"badbad")
         self.assertEqual(
             str(dse.exception),
-            "File do not start with a section header.\n"
+            "File does not start with a section header.\n"
             "file: b'badbad', line: 1\n'[badbad'"
         )
 
