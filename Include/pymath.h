@@ -215,4 +215,10 @@ PyAPI_FUNC(void) _Py_set_387controlword(unsigned short);
 					 (X) == -Py_HUGE_VAL))
 #endif
 
+/* Return the smallest integer k such that n < 2**k, or 0 if n == 0.
+ * Equivalent to floor(lg(x))+1.  Also equivalent to: bitwidth_of_type -
+ * count_leading_zero_bits(x)
+ */
+extern unsigned int _Py_bit_length(unsigned long d);
+
 #endif /* Py_PYMATH_H */
