@@ -77,6 +77,13 @@ class MimeTypesTestCase(unittest.TestCase):
                                           strict=True)
         self.assertEqual(exts, ['.g3', '.g\xb3'])
 
+    def test_added_types_are_used(self):
+        mime_type, _ = mimetypes.guess_type('test.myext')
+        self.assertEqual(None, mime_type)
+        mimetypes.add_type('testing/type', '.myext')
+        mime_type, _ = mimetypes.guess_type('test.myext')
+        self.assertEqual('testing/type', mime_type)
+
 
 @unittest.skipUnless(sys.platform.startswith("win"), "Windows only")
 class Win32MimeTypesTestCase(unittest.TestCase):
