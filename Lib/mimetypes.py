@@ -89,6 +89,8 @@ class MimeTypes:
         list of standard types, else to the list of non-standard
         types.
         """
+        if ext.find('.') != 0:
+            raise ValueError("Extensions should start with a '.'")
         self.types_map[strict][ext] = type
         exts = self.types_map_inv[strict].setdefault(type, [])
         if ext not in exts:
