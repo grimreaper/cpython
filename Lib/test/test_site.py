@@ -275,8 +275,9 @@ class HelperFunctionsTests(unittest.TestCase):
             self.assertEqual(dirs[1], wanted)
         elif os.sep == '/':
             # OS X non-framwework builds, Linux, FreeBSD, etc
-            self.assertEqual(len(dirs), 1)
-            wanted = os.path.join('xoxo', 'lib',
+            platsubdir = sysconfig.get_config_var('platsubdir')
+            self.assertTrue(len(dirs) in (1,2))
+            wanted = os.path.join('xoxo', platsubdir,
                                   'python%d.%d' % sys.version_info[:2],
                                   'site-packages')
             self.assertEqual(dirs[0], wanted)
