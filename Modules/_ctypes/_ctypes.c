@@ -1414,9 +1414,19 @@ PyCArrayType_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         goto error;
     }
     length = PyLong_AsLongAndOverflow(length_attr, &overflow);
-    if (overflow) {
-        PyErr_SetString(PyExc_OverflowError,
-                        "The '_length_' attribute is too large");
+    /* PyLong_Check(length_attr) is true, so it is guaranteed that
+       no error occurred in PyLong_AsLongAndOverflow(). */
+    assert(!(length == -1 && PyErr_Occurred()));
+    if (overflow || length < 0) {
+        if (overflow > 0) {
+            PyErr_SetString(PyExc_OverflowError,
+                            "The '_length_' attribute is too large");
+        }
+        else {
+            assert(overflow < 0 || length < 0);
+            PyErr_SetString(PyExc_ValueError,
+                            "The '_length_' attribute must be non-negative");
+        }
         Py_DECREF(length_attr);
         goto error;
     }

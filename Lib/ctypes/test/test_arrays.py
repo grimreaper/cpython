@@ -181,5 +181,23 @@ class ArrayTestCase(unittest.TestCase):
                 _type_ = c_int
                 _length_ = 1.87
 
+    def test_bad_length(self):
+        with self.assertRaises(ValueError):
+            class T(Array):
+                _type_ = c_int
+                _length_ = -1 << 1000
+        with self.assertRaises(ValueError):
+            class T(Array):
+                _type_ = c_int
+                _length_ = -1
+        with self.assertRaises(OverflowError):
+            class T(Array):
+                _type_ = c_int
+                _length_ = 1 << 1000
+        # _length_ might be zero.
+        class T(Array):
+            _type_ = c_int
+            _length_ = 0
+
 if __name__ == '__main__':
     unittest.main()
