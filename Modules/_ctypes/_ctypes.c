@@ -1414,6 +1414,7 @@ PyCArrayType_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         goto error;
     }
     length = PyLong_AsLongAndOverflow(length_attr, &overflow);
+    Py_DECREF(length_attr);
     /* PyLong_Check(length_attr) is true, so it is guaranteed that
        no error occurred in PyLong_AsLongAndOverflow(). */
     assert(!(length == -1 && PyErr_Occurred()));
@@ -1427,10 +1428,8 @@ PyCArrayType_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
             PyErr_SetString(PyExc_ValueError,
                             "The '_length_' attribute must be non-negative");
         }
-        Py_DECREF(length_attr);
         goto error;
     }
-    Py_DECREF(length_attr);
 
     type_attr = PyObject_GetAttrString((PyObject *)result, "_type_");
     if (!type_attr) {
