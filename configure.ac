@@ -1541,7 +1541,7 @@ yes)
            CFLAGS="$CFLAGS -Werror -Wstrict-aliasing"
            AC_COMPILE_IFELSE(
 	     [
-	       AC_LANG_PROGRAM([[void f(int **x) {}]],
+	       AC_LANG_PROGRAM([[void f(int **x) {(void)x;}]],
 	         [[double *x; f((int **) &x);]])
 	     ],[
 	       ac_cv_no_strict_aliasing=no
@@ -1883,7 +1883,7 @@ AC_CACHE_VAL(ac_cv_pthread_is_default,
 #include <stdio.h>
 #include <pthread.h>
 
-void* routine(void* p){return NULL;}
+void* routine(void* p){(void)p; return NULL;}
 
 int main(){
   pthread_t p;
@@ -1918,7 +1918,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <pthread.h>
 
-void* routine(void* p){return NULL;}
+void* routine(void* p){(void)p; return NULL;}
 
 int main(){
   pthread_t p;
@@ -1947,7 +1947,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <pthread.h>
 
-void* routine(void* p){return NULL;}
+void* routine(void* p){(void)p; return NULL;}
 
 int main(){
   pthread_t p;
@@ -1976,7 +1976,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 #include <pthread.h>
 
-void* routine(void* p){return NULL;}
+void* routine(void* p){(void)p; return NULL;}
 
 int main(){
   pthread_t p;
@@ -2201,7 +2201,7 @@ AC_CHECK_SIZEOF(uintptr_t)
 
 AC_MSG_CHECKING(for long double support)
 have_long_double=no
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[long double x; x = (long double)0;]])],[
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[long double x; x = (long double)0; (void)x;]])],[
   AC_DEFINE(HAVE_LONG_DOUBLE, 1, [Define this if you have the type long double.])
   have_long_double=yes
 ],[])
@@ -2253,7 +2253,7 @@ fi
 AC_MSG_CHECKING(for pthread_t)
 have_pthread_t=no
 AC_COMPILE_IFELSE([
-  AC_LANG_PROGRAM([[#include <pthread.h>]], [[pthread_t x; x = *(pthread_t*)0;]])
+  AC_LANG_PROGRAM([[#include <pthread.h>]], [[pthread_t x; x = *(pthread_t*)0; (void)x;]])
 ],[have_pthread_t=yes],[])
 AC_MSG_RESULT($have_pthread_t)
 if test "$have_pthread_t" = yes ; then
@@ -2270,7 +2270,7 @@ AC_CHECK_SIZEOF(pthread_key_t, [], [[#include <pthread.h>]])
 AC_MSG_CHECKING(whether pthread_key_t is compatible with int)
 if test "$ac_cv_sizeof_pthread_key_t" -eq "$ac_cv_sizeof_int" ; then
   AC_COMPILE_IFELSE(
-    [AC_LANG_PROGRAM([[#include <pthread.h>]], [[pthread_key_t k; k * 1;]])],
+    [AC_LANG_PROGRAM([[#include <pthread.h>]], [[pthread_key_t k; k = k * 2; (void)k;]])],
     [ac_pthread_key_t_is_arithmetic_type=yes],
     [ac_pthread_key_t_is_arithmetic_type=no]
   )
@@ -2957,7 +2957,7 @@ yes
 #include <stdio.h>
 #include <pthread.h>
 
-void * start_routine (void *arg) { exit (0); }]], [[
+void * start_routine (void *arg) { (void)arg; exit (0); }]], [[
 pthread_create (NULL, NULL, start_routine, NULL)]])],[
     AC_MSG_RESULT(yes)
     posix_threads=yes
@@ -3016,11 +3016,13 @@ if test "$posix_threads" = "yes"; then
       AC_CACHE_VAL(ac_cv_pthread_system_supported,
       [AC_RUN_IFELSE([AC_LANG_SOURCE([[
       #include <stdio.h>
+      #include <stlib.h>
       #include <pthread.h>
       void *foo(void *parm) {
+        (void)parm;
         return NULL;
       }
-      main() {
+      int main() {
         pthread_attr_t attr;
         pthread_t id;
         if (pthread_attr_init(&attr)) exit(-1);
@@ -3070,7 +3072,7 @@ dnl the check does not work on cross compilation case...
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ /* AF_INET6 available check */
 #include <sys/types.h>
 #include <sys/socket.h>]],
-[[int domain = AF_INET6;]])],[
+[[int domain = AF_INET6; (void)domain;]])],[
   AC_MSG_RESULT(yes)
   ipv6=yes
 ],[
@@ -3084,7 +3086,7 @@ if test "$ipv6" = "yes"; then
 	  AC_LANG_PROGRAM([[#include <sys/types.h>
 #include <netinet/in.h>]],
 			  [[struct sockaddr_in6 x;
-			    x.sin6_scope_id;]])
+			    (void)x.sin6_scope_id;]])
 	],[
 	  AC_MSG_RESULT(yes)
 	  ipv6=yes
@@ -3214,7 +3216,7 @@ fi
 AC_MSG_CHECKING(for CAN_RAW_FD_FRAMES)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[ /* CAN_RAW_FD_FRAMES available check */
 #include <linux/can/raw.h>]],
-[[int can_raw_fd_frames = CAN_RAW_FD_FRAMES;]])],[
+[[int can_raw_fd_frames = CAN_RAW_FD_FRAMES; (void)can_raw_fd_frames;]])],[
   AC_DEFINE(HAVE_LINUX_CAN_RAW_FD_FRAMES, 1, [Define if compiling using Linux 3.6 or later.])
   AC_MSG_RESULT(yes)
 ],[
@@ -3431,49 +3433,49 @@ AC_CHECK_DECL(dirfd,
 # For some functions, having a definition is not sufficient, since
 # we want to take their address.
 AC_MSG_CHECKING(for chroot)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=chroot]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=chroot; (void)x]])],
   [AC_DEFINE(HAVE_CHROOT, 1, Define if you have the 'chroot' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
 ])
 AC_MSG_CHECKING(for link)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=link]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=link; (void)x]])],
   [AC_DEFINE(HAVE_LINK, 1, Define if you have the 'link' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
 ])
 AC_MSG_CHECKING(for symlink)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=symlink]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=symlink; (void)x]])],
   [AC_DEFINE(HAVE_SYMLINK, 1, Define if you have the 'symlink' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
 ])
 AC_MSG_CHECKING(for fchdir)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=fchdir]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=fchdir; (void)x]])],
   [AC_DEFINE(HAVE_FCHDIR, 1, Define if you have the 'fchdir' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
 ])
 AC_MSG_CHECKING(for fsync)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=fsync]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=fsync; (void)x]])],
   [AC_DEFINE(HAVE_FSYNC, 1, Define if you have the 'fsync' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
 ])
 AC_MSG_CHECKING(for fdatasync)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=fdatasync]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <unistd.h>]], [[void *x=fdatasync; (void)x]])],
   [AC_DEFINE(HAVE_FDATASYNC, 1, Define if you have the 'fdatasync' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
 ])
 AC_MSG_CHECKING(for epoll)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/epoll.h>]], [[void *x=epoll_create]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/epoll.h>]], [[void *x=epoll_create; (void)x]])],
   [AC_DEFINE(HAVE_EPOLL, 1, Define if you have the 'epoll' functions.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
 ])
 AC_MSG_CHECKING(for epoll_create1)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/epoll.h>]], [[void *x=epoll_create1]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/epoll.h>]], [[void *x=epoll_create1; (void)x]])],
   [AC_DEFINE(HAVE_EPOLL_CREATE1, 1, Define if you have the 'epoll_create1' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
@@ -3491,7 +3493,7 @@ AC_MSG_CHECKING(for prlimit)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/time.h>
 #include <sys/resource.h>
-    ]], [[void *x=prlimit]])],
+    ]], [[void *x=prlimit; (void)x]])],
   [AC_DEFINE(HAVE_PRLIMIT, 1, Define if you have the 'prlimit' functions.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
@@ -3506,7 +3508,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 AC_MSG_CHECKING(for ctermid_r)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <stdio.h>
-]], [[void* p = ctermid_r]])],
+]], [[void* p = ctermid_r; (void)p]])],
   [AC_DEFINE(HAVE_CTERMID_R, 1, Define if you have the 'ctermid_r' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
@@ -3516,7 +3518,7 @@ AC_CACHE_CHECK([for flock declaration], [ac_cv_flock_decl],
   [AC_COMPILE_IFELSE(
     [AC_LANG_PROGRAM(
       [#include <sys/file.h>],
-      [void* p = flock]
+      [void* p = flock; (void)p]
     )],
     [ac_cv_flock_decl=yes],
     [ac_cv_flock_decl=no]
@@ -3534,7 +3536,7 @@ fi
 AC_MSG_CHECKING(for getpagesize)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <unistd.h>
-]], [[void* p = getpagesize]])],
+]], [[void* p = getpagesize; (void)p]])],
   [AC_DEFINE(HAVE_GETPAGESIZE, 1, Define if you have the 'getpagesize' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
@@ -3543,7 +3545,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 AC_MSG_CHECKING(for broken unsetenv)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <stdlib.h>
-]], [[int res = unsetenv("DUMMY")]])],
+]], [[int res = unsetenv("DUMMY"); ; (void)res]])],
   [AC_MSG_RESULT(no)],
   [AC_DEFINE(HAVE_BROKEN_UNSETENV, 1, Define if `unsetenv` does not return an int.)
    AC_MSG_RESULT(yes)
@@ -3566,6 +3568,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <unistd.h>
 int main(int argc, char*argv[])
 {
+  (void)argc;
   if(chflags(argv[0], 0) != 0)
     return 1;
   return 0;
@@ -3588,6 +3591,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <unistd.h>
 int main(int argc, char*argv[])
 {
+  (void)argc;
   if(lchflags(argv[0], 0) != 0)
     return 1;
   return 0;
@@ -3633,7 +3637,7 @@ esac
 AC_MSG_CHECKING(for hstrerror)
 AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <netdb.h>
-]], [[void* p = hstrerror; hstrerror(0)]])],
+]], [[void* p = hstrerror; (void)p; hstrerror(0)]])],
   [AC_DEFINE(HAVE_HSTRERROR, 1, Define if you have the 'hstrerror' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
@@ -3645,7 +3649,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-]], [[void* p = inet_aton;inet_aton(0,0)]])],
+]], [[void* p = inet_aton; (void)p; inet_aton(0,0)]])],
   [AC_DEFINE(HAVE_INET_ATON, 1, Define if you have the 'inet_aton' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
@@ -3657,7 +3661,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-]], [[void* p = inet_pton]])],
+]], [[void* p = inet_pton; (void)p]])],
   [AC_DEFINE(HAVE_INET_PTON, 1, Define if you have the 'inet_pton' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
@@ -3670,7 +3674,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #ifdef HAVE_GRP_H
 #include <grp.h>
 #endif
-]], [[void* p = setgroups]])],
+]], [[void* p = setgroups; (void)p]])],
   [AC_DEFINE(HAVE_SETGROUPS, 1, Define if you have the 'setgroups' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
@@ -3707,7 +3711,8 @@ AC_CHECK_FUNCS(setpgrp,
 )
 AC_CHECK_FUNCS(gettimeofday,
   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/time.h>]],
-  				     [[gettimeofday((struct timeval*)0,(struct timezone*)0);]])],
+    [[struct timeval t;(void) gettimeofday(&t,(struct timezone*)0); (void)t;]]
+  )],
     [],
     [AC_DEFINE(GETTIMEOFDAY_NO_TZ, 1,
       [Define if gettimeofday() does not have second (timezone) argument
@@ -3774,7 +3779,7 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifdef HAVE_NET_IF_H
 # include <net/if.h>
 #endif
-]], [[struct if_nameindex *ni = if_nameindex(); int x = ni[0].if_index;]])],
+]], [[struct if_nameindex *ni = if_nameindex(); int x = ni[0].if_index; (void)x]])],
   [AC_DEFINE(HAVE_IF_NAMEINDEX, 1, Define to 1 if you have the 'if_nameindex' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)
@@ -3965,7 +3970,7 @@ AC_MSG_RESULT($was_it_defined)
 
 AC_MSG_CHECKING(for addrinfo)
 AC_CACHE_VAL(ac_cv_struct_addrinfo,
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]], [[struct addrinfo a]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <netdb.h>]], [[struct addrinfo a; (void)a]])],
   [ac_cv_struct_addrinfo=yes],
   [ac_cv_struct_addrinfo=no]))
 AC_MSG_RESULT($ac_cv_struct_addrinfo)
@@ -3977,7 +3982,7 @@ AC_MSG_CHECKING(for sockaddr_storage)
 AC_CACHE_VAL(ac_cv_struct_sockaddr_storage,
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #		include <sys/types.h>
-#		include <sys/socket.h>]], [[struct sockaddr_storage s]])],
+#		include <sys/socket.h>]], [[struct sockaddr_storage s; (void)s]])],
   [ac_cv_struct_sockaddr_storage=yes],
   [ac_cv_struct_sockaddr_storage=no]))
 AC_MSG_RESULT($ac_cv_struct_sockaddr_storage)
@@ -3990,7 +3995,7 @@ AC_CACHE_VAL(ac_cv_struct_sockaddr_alg,
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #		include <sys/types.h>
 #		include <sys/socket.h>
-#		include <linux/if_alg.h>]], [[struct sockaddr_alg s]])],
+#		include <linux/if_alg.h>]], [[struct sockaddr_alg s; (void)s]])],
   [ac_cv_struct_sockaddr_alg=yes],
   [ac_cv_struct_sockaddr_alg=no]))
 AC_MSG_RESULT($ac_cv_struct_sockaddr_alg)
@@ -4005,7 +4010,7 @@ AC_C_CONST
 
 works=no
 AC_MSG_CHECKING(for working signed char)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[signed char c;]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]], [[signed char c; (void)c]])],
   [works=yes],
   [AC_DEFINE(signed, , [Define to empty if the keyword does not work.])]
 )
@@ -4013,7 +4018,7 @@ AC_MSG_RESULT($works)
 
 have_prototypes=no
 AC_MSG_CHECKING(for prototypes)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int foo(int x) { return 0; }]], [[return foo(10);]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[int foo(int x) {(void)x; return 0; }]], [[return foo(10);]])],
   [AC_DEFINE(HAVE_PROTOTYPES, 1,
      [Define if your compiler supports function prototype])
    have_prototypes=yes],
@@ -4046,7 +4051,7 @@ AC_MSG_CHECKING(for socketpair)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/socket.h>
-]], [[void *x=socketpair]])],
+]], [[void *x=socketpair; (void)x]])],
   [AC_DEFINE(HAVE_SOCKETPAIR, 1, [Define if you have the 'socketpair' function.])
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)]
@@ -4055,7 +4060,9 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 # check if sockaddr has sa_len member
 AC_MSG_CHECKING(if sockaddr has sa_len member)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/types.h>
-#include <sys/socket.h>]], [[struct sockaddr x;
+#include <sys/socket.h>]], [[
+struct sockaddr x;
+(void)x;
 x.sa_len = 0;]])],
   [AC_MSG_RESULT(yes)
    AC_DEFINE(HAVE_SOCKADDR_SA_LEN, 1, [Define if sockaddr has sa_len member])],
@@ -4115,6 +4122,7 @@ AC_CHECK_FUNC(gethostbyname_r, [
             struct hostent *he;
             struct hostent_data data;
 
+            (void)data;
             (void) gethostbyname_r(name, he, &data);
           ]])],
           [
@@ -4897,6 +4905,7 @@ AC_MSG_CHECKING(for tv_nsec in struct stat)
 AC_CACHE_VAL(ac_cv_stat_tv_nsec,
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/stat.h>]], [[
 struct stat st;
+(void)st;
 st.st_mtim.tv_nsec = 1;
 ]])],
 [ac_cv_stat_tv_nsec=yes],
@@ -4913,6 +4922,7 @@ AC_MSG_CHECKING(for tv_nsec2 in struct stat)
 AC_CACHE_VAL(ac_cv_stat_tv_nsec2,
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <sys/stat.h>]], [[
 struct stat st;
+(void)st;
 st.st_mtimespec.tv_nsec = 1;
 ]])],
 [ac_cv_stat_tv_nsec2=yes],
@@ -4944,6 +4954,7 @@ AC_MSG_CHECKING(whether mvwdelch is an expression)
 AC_CACHE_VAL(ac_cv_mvwdelch_is_expression,
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <curses.h>]], [[
   int rtn;
+  (void)rtn;
   rtn = mvwdelch(0,0,0);
 ]])],
 [ac_cv_mvwdelch_is_expression=yes],
@@ -4974,21 +4985,21 @@ then
 fi
 
 AC_MSG_CHECKING(for is_term_resized)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <curses.h>]], [[void *x=is_term_resized]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <curses.h>]], [[void *x=is_term_resized; (void)x]])],
   [AC_DEFINE(HAVE_CURSES_IS_TERM_RESIZED, 1, Define if you have the 'is_term_resized' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)]
 )
 
 AC_MSG_CHECKING(for resize_term)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <curses.h>]], [[void *x=resize_term]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <curses.h>]], [[void *x=resize_term; (void)x]])],
   [AC_DEFINE(HAVE_CURSES_RESIZE_TERM, 1, Define if you have the 'resize_term' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)]
 )
 
 AC_MSG_CHECKING(for resizeterm)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <curses.h>]], [[void *x=resizeterm]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <curses.h>]], [[void *x=resizeterm; (void)x]])],
   [AC_DEFINE(HAVE_CURSES_RESIZETERM, 1, Define if you have the 'resizeterm' function.)
    AC_MSG_RESULT(yes)],
   [AC_MSG_RESULT(no)]
@@ -5134,6 +5145,7 @@ AC_CACHE_VAL(ac_cv_computed_gotos,
 AC_RUN_IFELSE([AC_LANG_SOURCE([[[
 int main(int argc, char **argv)
 {
+    (void)argc; (void)argv;
     static void *targets[1] = { &&LABEL1 };
     goto LABEL2;
 LABEL1:
@@ -5272,6 +5284,7 @@ AC_LINK_IFELSE(
     _Atomic void *py_atomic_address = (void*) &value;
     int main() {
       int loaded_value = atomic_load(&value);
+      (void)loaded_value;
       return 0;
     }
   ]])

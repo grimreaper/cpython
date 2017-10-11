@@ -778,7 +778,6 @@ infodir
 docdir
 oldincludedir
 includedir
-runstatedir
 localstatedir
 sharedstatedir
 sysconfdir
@@ -890,7 +889,6 @@ datadir='${datarootdir}'
 sysconfdir='${prefix}/etc'
 sharedstatedir='${prefix}/com'
 localstatedir='${prefix}/var'
-runstatedir='${localstatedir}/run'
 includedir='${prefix}/include'
 oldincludedir='/usr/include'
 docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
@@ -1143,15 +1141,6 @@ do
   | -silent | --silent | --silen | --sile | --sil)
     silent=yes ;;
 
-  -runstatedir | --runstatedir | --runstatedi | --runstated \
-  | --runstate | --runstat | --runsta | --runst | --runs \
-  | --run | --ru | --r)
-    ac_prev=runstatedir ;;
-  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
-  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
-  | --run=* | --ru=* | --r=*)
-    runstatedir=$ac_optarg ;;
-
   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
     ac_prev=sbindir ;;
   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
@@ -1289,7 +1278,7 @@ fi
 for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
 		datadir sysconfdir sharedstatedir localstatedir includedir \
 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
-		libdir localedir mandir runstatedir
+		libdir localedir mandir
 do
   eval ac_val=\$$ac_var
   # Remove trailing slashes.
@@ -1442,7 +1431,6 @@ Fine tuning of the installation directories:
   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
-  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
   --libdir=DIR            object code libraries [EPREFIX/lib]
   --includedir=DIR        C header files [PREFIX/include]
   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
@@ -6852,7 +6840,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
            cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-	       void f(int **x) {}
+	       void f(int **x) {(void)x;}
 int
 main ()
 {
@@ -7352,7 +7340,7 @@ else
 #include <stdio.h>
 #include <pthread.h>
 
-void* routine(void* p){return NULL;}
+void* routine(void* p){(void)p; return NULL;}
 
 int main(){
   pthread_t p;
@@ -7408,7 +7396,7 @@ else
 #include <stdio.h>
 #include <pthread.h>
 
-void* routine(void* p){return NULL;}
+void* routine(void* p){(void)p; return NULL;}
 
 int main(){
   pthread_t p;
@@ -7458,7 +7446,7 @@ else
 #include <stdio.h>
 #include <pthread.h>
 
-void* routine(void* p){return NULL;}
+void* routine(void* p){(void)p; return NULL;}
 
 int main(){
   pthread_t p;
@@ -7508,7 +7496,7 @@ else
 #include <stdio.h>
 #include <pthread.h>
 
-void* routine(void* p){return NULL;}
+void* routine(void* p){(void)p; return NULL;}
 
 int main(){
   pthread_t p;
@@ -8631,7 +8619,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-long double x; x = (long double)0;
+long double x; x = (long double)0; (void)x;
   ;
   return 0;
 }
@@ -8832,7 +8820,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-pthread_t x; x = *(pthread_t*)0;
+pthread_t x; x = *(pthread_t*)0; (void)x;
   ;
   return 0;
 }
@@ -8930,7 +8918,7 @@ if test "$ac_cv_sizeof_pthread_key_t" -eq "$ac_cv_sizeof_int" ; then
 int
 main ()
 {
-pthread_key_t k; k * 1;
+pthread_key_t k; k = k * 2; (void)k;
   ;
   return 0;
 }
@@ -10197,7 +10185,7 @@ $as_echo_n "checking for pthread_create in -lpthread... " >&6; }
 #include <stdio.h>
 #include <pthread.h>
 
-void * start_routine (void *arg) { exit (0); }
+void * start_routine (void *arg) { (void)arg; exit (0); }
 int
 main ()
 {
@@ -10492,11 +10480,13 @@ else
 /* end confdefs.h.  */
 
       #include <stdio.h>
+      #include <stlib.h>
       #include <pthread.h>
       void *foo(void *parm) {
+        (void)parm;
         return NULL;
       }
-      main() {
+      int main() {
         pthread_attr_t attr;
         pthread_t id;
         if (pthread_attr_init(&attr)) exit(-1);
@@ -10595,7 +10585,7 @@ else
 int
 main ()
 {
-int domain = AF_INET6;
+int domain = AF_INET6; (void)domain;
   ;
   return 0;
 }
@@ -10627,7 +10617,7 @@ int
 main ()
 {
 struct sockaddr_in6 x;
-			    x.sin6_scope_id;
+			    (void)x.sin6_scope_id;
   ;
   return 0;
 }
@@ -10824,7 +10814,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-int can_raw_fd_frames = CAN_RAW_FD_FRAMES;
+int can_raw_fd_frames = CAN_RAW_FD_FRAMES; (void)can_raw_fd_frames;
   ;
   return 0;
 }
@@ -11188,7 +11178,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=chroot
+void *x=chroot; (void)x
   ;
   return 0;
 }
@@ -11213,7 +11203,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=link
+void *x=link; (void)x
   ;
   return 0;
 }
@@ -11238,7 +11228,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=symlink
+void *x=symlink; (void)x
   ;
   return 0;
 }
@@ -11263,7 +11253,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=fchdir
+void *x=fchdir; (void)x
   ;
   return 0;
 }
@@ -11288,7 +11278,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=fsync
+void *x=fsync; (void)x
   ;
   return 0;
 }
@@ -11313,7 +11303,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=fdatasync
+void *x=fdatasync; (void)x
   ;
   return 0;
 }
@@ -11338,7 +11328,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=epoll_create
+void *x=epoll_create; (void)x
   ;
   return 0;
 }
@@ -11363,7 +11353,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=epoll_create1
+void *x=epoll_create1; (void)x
   ;
   return 0;
 }
@@ -11419,7 +11409,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=prlimit
+void *x=prlimit; (void)x
   ;
   return 0;
 }
@@ -11453,7 +11443,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void* p = ctermid_r
+void* p = ctermid_r; (void)p
   ;
   return 0;
 }
@@ -11482,7 +11472,7 @@ else
 int
 main ()
 {
-void* p = flock
+void* p = flock; (void)p
 
   ;
   return 0;
@@ -11570,7 +11560,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void* p = getpagesize
+void* p = getpagesize; (void)p
   ;
   return 0;
 }
@@ -11598,7 +11588,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-int res = unsetenv("DUMMY")
+int res = unsetenv("DUMMY"); ; (void)res
   ;
   return 0;
 }
@@ -11765,6 +11755,7 @@ else
 #include <unistd.h>
 int main(int argc, char*argv[])
 {
+  (void)argc;
   if(chflags(argv[0], 0) != 0)
     return 1;
   return 0;
@@ -11814,6 +11805,7 @@ else
 #include <unistd.h>
 int main(int argc, char*argv[])
 {
+  (void)argc;
   if(lchflags(argv[0], 0) != 0)
     return 1;
   return 0;
@@ -11917,7 +11909,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void* p = hstrerror; hstrerror(0)
+void* p = hstrerror; (void)p; hstrerror(0)
   ;
   return 0;
 }
@@ -11949,7 +11941,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void* p = inet_aton;inet_aton(0,0)
+void* p = inet_aton; (void)p; inet_aton(0,0)
   ;
   return 0;
 }
@@ -11981,7 +11973,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void* p = inet_pton
+void* p = inet_pton; (void)p
   ;
   return 0;
 }
@@ -12013,7 +12005,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void* p = setgroups
+void* p = setgroups; (void)p
   ;
   return 0;
 }
@@ -12338,7 +12330,8 @@ _ACEOF
 int
 main ()
 {
-gettimeofday((struct timeval*)0,(struct timezone*)0);
+struct timeval t;(void) gettimeofday(&t,(struct timezone*)0); (void)t;
+
   ;
   return 0;
 }
@@ -12601,7 +12594,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-struct if_nameindex *ni = if_nameindex(); int x = ni[0].if_index;
+struct if_nameindex *ni = if_nameindex(); int x = ni[0].if_index; (void)x
   ;
   return 0;
 }
@@ -13141,7 +13134,7 @@ else
 int
 main ()
 {
-struct addrinfo a
+struct addrinfo a; (void)a
   ;
   return 0;
 }
@@ -13175,7 +13168,7 @@ else
 int
 main ()
 {
-struct sockaddr_storage s
+struct sockaddr_storage s; (void)s
   ;
   return 0;
 }
@@ -13210,7 +13203,7 @@ else
 int
 main ()
 {
-struct sockaddr_alg s
+struct sockaddr_alg s; (void)s
   ;
   return 0;
 }
@@ -13357,7 +13350,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-signed char c;
+signed char c; (void)c
   ;
   return 0;
 }
@@ -13379,7 +13372,7 @@ have_prototypes=no
 $as_echo_n "checking for prototypes... " >&6; }
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int foo(int x) { return 0; }
+int foo(int x) {(void)x; return 0; }
 int
 main ()
 {
@@ -13446,7 +13439,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=socketpair
+void *x=socketpair; (void)x
   ;
   return 0;
 }
@@ -13474,7 +13467,9 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
+
 struct sockaddr x;
+(void)x;
 x.sa_len = 0;
   ;
   return 0;
@@ -13592,6 +13587,7 @@ main ()
             struct hostent *he;
             struct hostent_data data;
 
+            (void)data;
             (void) gethostbyname_r(name, he, &data);
 
   ;
@@ -15573,6 +15569,7 @@ main ()
 {
 
 struct stat st;
+(void)st;
 st.st_mtim.tv_nsec = 1;
 
   ;
@@ -15610,6 +15607,7 @@ main ()
 {
 
 struct stat st;
+(void)st;
 st.st_mtimespec.tv_nsec = 1;
 
   ;
@@ -15686,6 +15684,7 @@ main ()
 {
 
   int rtn;
+  (void)rtn;
   rtn = mvwdelch(0,0,0);
 
   ;
@@ -15756,7 +15755,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=is_term_resized
+void *x=is_term_resized; (void)x
   ;
   return 0;
 }
@@ -15782,7 +15781,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=resize_term
+void *x=resize_term; (void)x
   ;
   return 0;
 }
@@ -15808,7 +15807,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 int
 main ()
 {
-void *x=resizeterm
+void *x=resizeterm; (void)x
   ;
   return 0;
 }
@@ -16074,6 +16073,7 @@ else
 
 int main(int argc, char **argv)
 {
+    (void)argc; (void)argv;
     static void *targets[1] = { &&LABEL1 };
     goto LABEL2;
 LABEL1:
@@ -16272,6 +16272,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
     _Atomic void *py_atomic_address = (void*) &value;
     int main() {
       int loaded_value = atomic_load(&value);
+      (void)loaded_value;
       return 0;
     }
 
