@@ -1803,7 +1803,7 @@ getsockaddrarg(PySocketSockObject *s, PyObject *args,
         char *interfaceName;
         int protoNumber;
         int hatype = 0;
-        int pkttype = 0;
+        int pkttype = PACKET_HOST;
         Py_buffer haddr = {NULL, NULL};
 
         if (!PyTuple_Check(args)) {
@@ -1834,7 +1834,7 @@ getsockaddrarg(PySocketSockObject *s, PyObject *args,
         if (protoNumber < 0 || protoNumber > 0xffff) {
             PyErr_SetString(
                 PyExc_OverflowError,
-                "getsockaddrarg: protoNumber must be 0-65535.");
+                "getsockaddrarg: proto must be 0-65535.");
             PyBuffer_Release(&haddr);
             return 0;
         }
@@ -2787,7 +2787,6 @@ sock_bind(PySocketSockObject *s, PyObject *addro)
 
     if (!getsockaddrarg(s, addro, SAS2SA(&addrbuf), &addrlen))
         return NULL;
-    Py_BEGIN_ALLOW_THREADS
     res = bind(s->sock_fd, SAS2SA(&addrbuf), addrlen);
     Py_END_ALLOW_THREADS
     if (res < 0)
@@ -2800,7 +2799,7 @@ PyDoc_STRVAR(bind_doc,
 \n\
 Bind the socket to a local address.  For IP sockets, the address is a\n\
 pair (host, port); the host must refer to the local host. For raw packet\n\
-sockets the address is a tuple (ifname, proto [,pkttype [,hatype]])");
+sockets the address is a tuple (ifname, proto [,pkttype [,hatype [,addr]]])");
 
 
 /* s.close() method.

@@ -161,10 +161,25 @@ created.  Socket addresses are represented as follows:
 
   .. versionadded:: 3.7
 
-- Certain other address families (:const:`AF_PACKET`, :const:`AF_CAN`)
-  support specific representations.
+- The :const:`AF_PACKET` address family is a Linux-only packet address protocol
+  represented by the tuple ``(ifname, proto[, pkttype[, hatype[, addr]]])``
+  where:
 
-  .. XXX document them!
+  - *ifname* - String specifying the device name.
+  - *proto* - An endian-corrected integer specifying the Ethernet protocol
+    number.
+  - *pkttype* - Optional constant integer specifying the packet type:
+
+    - ``PACKET_HOST`` (the default) - Packet addressed to the local host.
+    - ``PACKET_BROADCAST`` - Physical-layer broadcast packet.
+    - ``PACKET_MULTIHOST`` - Packet sent to a physical-layer multicast address.
+    - ``PACKET_OTHERHOST`` - Packet to some other host that has been caught by
+      a device driver in promiscuous mode.
+    - ``PACKET_OUTGOING`` - Packet originating from the local host that is
+      looped back to a packet socket.
+  - *hatype* - Optional integer specifying the ARP hardware address type.
+  - *addr* - Optional bytes-like object specifying the hardware physical
+    address, whose interpretation depends on the device.
 
 For IPv4 addresses, two special forms are accepted instead of a host address:
 the empty string represents :const:`INADDR_ANY`, and the string
@@ -363,6 +378,16 @@ Constants
    .. versionadded:: 3.7
 
 
+.. data:: AF_PACKET
+          PF_PACKET
+          PACKET_*
+
+   Many constants of these forms, documented in the Linux documentation, are
+   also defined in the socket module.
+
+   Availability: Linux >= 2.2.
+
+
 .. data:: AF_RDS
           PF_RDS
           SOL_RDS
@@ -456,15 +481,16 @@ The following functions all create :ref:`socket objects <socket-objects>`.
 
    Create a new socket using the given address family, socket type and protocol
    number.  The address family should be :const:`AF_INET` (the default),
-   :const:`AF_INET6`, :const:`AF_UNIX`, :const:`AF_CAN` or :const:`AF_RDS`. The
-   socket type should be :const:`SOCK_STREAM` (the default),
-   :const:`SOCK_DGRAM`, :const:`SOCK_RAW` or perhaps one of the other ``SOCK_``
-   constants. The protocol number is usually zero and may be omitted or in the
-   case where the address family is :const:`AF_CAN` the protocol should be one
-   of :const:`CAN_RAW`, :const:`CAN_BCM` or :const:`CAN_ISOTP`.  If *fileno* is specified, the other
-   arguments are ignored, causing the socket with the specified file descriptor
-   to return.  Unlike :func:`socket.fromfd`, *fileno* will return the same
-   socket and not a duplicate. This may help close a detached socket using
+   :const:`AF_INET6`, :const:`AF_UNIX`, :const:`AF_CAN`, :const:`AF_PACKET`,
+   or :const:`AF_RDS`. The socket type should be :const:`SOCK_STREAM` (the
+   default), :const:`SOCK_DGRAM`, :const:`SOCK_RAW` or perhaps one of the other
+   ``SOCK_`` constants. The protocol number is usually zero and may be omitted
+   or in the case where the address family is :const:`AF_CAN` the protocol
+   should be one of :const:`CAN_RAW`, :const:`CAN_BCM` or :const:`CAN_ISOTP`.
+   If *fileno* is specified, the other arguments are ignored, causing the
+   socket with the specified file descriptor to return.  Unlike
+   :func:`socket.fromfd`, *fileno* will return the same socket and not a
+   duplicate. This may help close a detached socket using
    :meth:`socket.close()`.
 
    The newly created socket is :ref:`non-inheritable <fd_inheritance>`.
