@@ -2787,6 +2787,7 @@ sock_bind(PySocketSockObject *s, PyObject *addro)
 
     if (!getsockaddrarg(s, addro, SAS2SA(&addrbuf), &addrlen))
         return NULL;
+    Py_BEGIN_ALLOW_THREADS
     res = bind(s->sock_fd, SAS2SA(&addrbuf), addrlen);
     Py_END_ALLOW_THREADS
     if (res < 0)
