@@ -911,7 +911,9 @@ class ExtensionFileLoader(FileLoader, _LoaderBasics):
         if name is not None:
             _warnings.warn("the 'name' parameter is deprecated; use "
                            "'fullname' instead", DeprecationWarning)
-        self.name = fullname
+            self.name = name
+        else:
+            self.name = fullname
         self.path = path
 
     def __eq__(self, other):
