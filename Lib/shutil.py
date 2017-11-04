@@ -130,18 +130,21 @@ def copymode(src, dst, *, follow_symlinks=True):
     (e.g. Linux) this method does nothing.
 
     """
-    if not follow_symlinks and os.path.islink(src) and os.path.islink(dst):
-        if hasattr(os, 'lchmod'):
-            stat_func, chmod_func = os.lstat, os.lchmod
-        else:
-            return
-    elif hasattr(os, 'chmod'):
-        stat_func, chmod_func = os.stat, os.chmod
-    else:
+    st = os.stat(src, follow_symlinks=follow_symlinks)
+    try:
+        os.chmod(dst, stat.S_IMODE(st.st_mode), follow_symlinks=follow_symlinks)
+    except NotImplementedError:
+        # if we got a NotImplementedError, it's because
+        #   * follow_symlinks=False,
+        #   * lchmod() is unavailable, and
+        #   * either
+        #       * fchmodnat() is unavailable or
+        #       * fchmodat() doesn't implement AT_SYMLINK_NOFOLLOW.
+        #         (it returned ENOSUP.)
+        # therefore we're out of options--we simply cannot chmod the
+        # symlink.  give up, suppress the error.
+        # (which is what shutil always did in this circumstance.)
         return
-
-    st = stat_func(src)
-    chmod_func(dst, stat.S_IMODE(st.st_mode))
 
 if hasattr(os, 'listxattr'):
     def _copyxattr(src, dst, *, follow_symlinks=True):
@@ -199,20 +202,7 @@ def copystat(src, dst, *, follow_symlinks=True):
     mode = stat.S_IMODE(st.st_mode)
     lookup("utime")(dst, ns=(st.st_atime_ns, st.st_mtime_ns),
         follow_symlinks=follow)
-    try:
-        lookup("chmod")(dst, mode, follow_symlinks=follow)
-    except NotImplementedError:
-        # if we got a NotImplementedError, it's because
-        #   * follow_symlinks=False,
-        #   * lchown() is unavailable, and
-        #   * either
-        #       * fchownat() is unavailable or
-        #       * fchownat() doesn't implement AT_SYMLINK_NOFOLLOW.
-        #         (it returned ENOSUP.)
-        # therefore we're out of options--we simply cannot chown the
-        # symlink.  give up, suppress the error.
-        # (which is what shutil always did in this circumstance.)
-        pass
+    copymode(src, dst, follow_symlinks=follow)
     if hasattr(st, 'st_flags'):
         try:
             lookup("chflags")(dst, st.st_flags, follow_symlinks=follow)
