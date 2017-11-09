@@ -569,7 +569,7 @@ class StreamReader:
             if self._eof:
                 chunk = bytes(self._buffer)
                 self._buffer.clear()
-                raise IncompleteReadError(chunk, None)
+                raise IncompleteReadError(chunk, seplen)
 
             # _wait_for_data() will resume reading if stream was paused.
             yield from self._wait_for_data('readuntil')
