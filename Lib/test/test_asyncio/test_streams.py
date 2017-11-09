@@ -434,13 +434,15 @@ class StreamReaderTests(test_utils.TestCase):
 
     def test_readuntil_eof(self):
         stream = asyncio.StreamReader(loop=self.loop)
-        stream.feed_data(b'some dataAA')
+        data = b'some dataAA'
+        stream.feed_data(data)
         stream.feed_eof()
-
+        
+        separator = b'AAA'
         with self.assertRaises(asyncio.IncompleteReadError) as cm:
-            self.loop.run_until_complete(stream.readuntil(b'AAA'))
-        self.assertEqual(cm.exception.partial, b'some dataAA')
-        self.assertIsNone(cm.exception.expected)
+            self.loop.run_until_complete(stream.readuntil(separator))
+        self.assertEqual(cm.exception.partial, data)
+        self.assertEqual(cm.exception.expected, separator)
         self.assertEqual(b'', stream._buffer)
 
     def test_readuntil_limit_found_sep(self):
