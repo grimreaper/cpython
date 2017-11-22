@@ -1384,6 +1384,14 @@ pymain_parse_envvars(_PyMain *pymain)
     }
     core_config->allocator = Py_GETENV("PYTHONMALLOC");
 
+    /* -X options */
+    if (pymain_get_xoption(pymain, L"showrefcount")) {
+        core_config->show_ref_count = 1;
+    }
+    if (pymain_get_xoption(pymain, L"showalloccount")) {
+        core_config->show_alloc_count = 1;
+    }
+
     /* More complex options: env var and/or -X option */
     if (pymain_get_env_var("PYTHONFAULTHANDLER")
        || pymain_get_xoption(pymain, L"faulthandler")) {
@@ -1391,10 +1399,15 @@ pymain_parse_envvars(_PyMain *pymain)
     }
     if (pymain_get_env_var("PYTHONPROFILEIMPORTTIME")
        || pymain_get_xoption(pymain, L"importtime")) {
-        core_config->importtime = 1;
+        core_config->import_time = 1;
     }
     if (pymain_init_tracemalloc(pymain) < 0) {
         return -1;
+    }
+    if (pymain_get_xoption(pymain, L"dev")) {
+        core_config->dev_mode = 1;
+        core_config->faulthandler = 1;
+        core_config->allocator = "debug";
     }
     return 0;
 }
