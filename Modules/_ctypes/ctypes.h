@@ -212,7 +212,7 @@ typedef struct {
     char *format;
     int ndim;
     Py_ssize_t *shape;
-/*      Py_ssize_t *strides;    */ /* unused in ctypes */
+    Py_ssize_t *strides;
 /*      Py_ssize_t *suboffsets; */ /* unused in ctypes */
 
 } StgDictObject;
