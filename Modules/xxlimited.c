@@ -121,7 +121,7 @@ static PyType_Spec Xxo_Type_spec = {
     "xxlimited.Xxo",
     sizeof(XxoObject),
     0,
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_HAVE_FINALIZE,
+    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,
     Xxo_Type_slots
 };
 
