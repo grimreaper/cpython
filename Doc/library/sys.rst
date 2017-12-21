@@ -305,7 +305,7 @@ always available.
 
    .. versionchanged:: 3.7.1
       Included executable suffix to path, if one is defined for the
-      platform.
+      platform, unless the executable path is a symbolic link.
 
 
 .. function:: exit([arg])
