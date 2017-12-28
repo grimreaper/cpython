@@ -2165,7 +2165,10 @@ class PyBuildExt(build_ext):
             include_dirs=openssl_includes,
             library_dirs=openssl_libdirs,
             libraries=openssl_libs,
-            depends=['socketmodule.h']
+            depends=[
+                'socketmodule.h', '_ssl/misc.c', '_ssl/cert.c',
+                '_ssl/pkey.c', 'sslmodule.h'
+            ]
         )
 
         hashlib_ext = Extension(
