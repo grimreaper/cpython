@@ -1,0 +1,2 @@
+profile command line now accepts `-m module_name` as an alternative to
+script path.
