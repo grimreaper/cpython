@@ -20,6 +20,7 @@ import threading
 import unittest
 from test import support, mock_socket
 from test.support import HOST, HOSTv4, HOSTv6
+from unittest.mock import patch
 
 
 if sys.platform == 'darwin':
@@ -557,6 +558,38 @@ class DebuggingServerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             smtp.send_message(m)
         smtp.close()
+
+    @patch('email.utils.formatdate')
+    def testSendMessageAddDateIfMissing(self, mocked_date_obj):
+        current_date = 'Thu, 1 Jan 1970 17:42:00 +0000'
+
+        mocked_date_obj.return_value = current_date
+        m = email.mime.text.MIMEText('A test message')
+        m['From'] = 'foo@bar.com'
+        m['To'] = 'John'
+        m['CC'] = 'Sally, Fred'
+        m['Bcc'] = 'John Root <root@localhost>, "Dinsdale" <warped@silly.walks.com>'
+        smtp = smtplib.SMTP(HOST, self.port, local_hostname='localhost', timeout=3)
+        smtp.send_message(m)
+        # XXX (see comment in testSend)
+        time.sleep(0.01)
+        smtp.quit()
+
+        self.client_evt.set()
+        self.serv_evt.wait()
+        self.output.flush()
+        # The Resent-Bcc headers are deleted before serialization.
+        del m['Bcc']
+        del m['Resent-Bcc']
+        # Remove the X-Peer header that DebuggingServer adds.
+        test_output = self.get_output_without_xpeer()
+        mexpect = '%s%s\n%s' % (MSG_BEGIN, m.as_string(), MSG_END)
+        self.assertEqual(test_output, mexpect)
+        debugout = smtpd.DEBUGSTREAM.getvalue()
+        Date = re.compile(''.join(("\\\\nDate: ", re.escape(current_date))), re.MULTILINE)
+        self.assertRegex(debugout, Date)
+
+
 
 class NonConnectingTests(unittest.TestCase):
 
