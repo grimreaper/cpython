@@ -41,10 +41,9 @@ class SemaphoreTracker(object):
         This can be run from any process.  Usually a child process will use
         the semaphore created by its parent.'''
         with self._lock:
-            if self._pid is not None:
+            if self._fd is not None:
                 # semaphore tracker was launched before, is it still running?
-                pid, status = os.waitpid(self._pid, os.WNOHANG)
-                if not pid:
+                if self._check_alive():
                     # => still alive
                     return
                 # => dead, launch it again
@@ -77,6 +76,15 @@ class SemaphoreTracker(object):
                 self._pid = pid
             finally:
                 os.close(r)
+
+    def _check_alive(self):
+        '''Check for that the pipe has not been closed by sending a probe.'''
+        try:
+            os.write(self._fd, b'PROBE:0\n')
+        except BrokenPipeError:
+            return False
+        else:
+            return True
 
     def register(self, name):
         '''Register name of semaphore with semaphore tracker.'''
@@ -128,6 +136,8 @@ def main(fd):
                         cache.add(name)
                     elif cmd == b'UNREGISTER':
                         cache.remove(name)
+                    elif cmd == b'PROBE':
+                        pass
                     else:
                         raise RuntimeError('unrecognized command %r' % cmd)
                 except Exception:
