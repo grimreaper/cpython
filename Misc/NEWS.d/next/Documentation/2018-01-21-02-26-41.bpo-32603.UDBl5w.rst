@@ -1,0 +1,3 @@
+Add comment in the re module about the fact that a backslash-character pair
+that is not a valid escape sequence now generates a DeprecationWarning.
+Patch by Pablo Galindo.
