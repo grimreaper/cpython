@@ -162,11 +162,11 @@ The special characters are:
 
    If you're not using a raw string to express the pattern, remember that Python
    also uses the backslash as an escape sequence in string literals; if the escape
-   sequence isn't recognized by Python's parser, the backslash and subsequent
-   character are included in the resulting string.  However, if Python would
-   recognize the resulting sequence, the backslash should be repeated twice.  This
-   is complicated and hard to understand, so it's highly recommended that you use
-   raw strings for all but the simplest expressions.
+   sequence isn't recognized by Python's parser, it will generate a 
+   :exc:`DeprecationWarning` and in the future this will become a :exc:`Syntaxerror`.
+   However, if Python would recognize the resulting sequence, the backslash should 
+   be repeated twice.  This is complicated and hard to understand, so it's highly 
+   recommended that you use raw strings for all but the simplest expressions.
 
 ``[]``
    Used to indicate a set of characters.  In a set:
