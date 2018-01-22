@@ -28,7 +28,10 @@ character for the same purpose in string literals; for example, to match
 a literal backslash, one might have to write ``'\\\\'`` as the pattern
 string, because the regular expression must be ``\\``, and each
 backslash must be expressed as ``\\`` inside a regular Python string
-literal.
+literal. Also, please note that any invalid escape sequences in Python's
+usage of the backslash in string literals now generate a DeprecationWarning
+and in the future this will become a SyntaxError. This behaviour will happen
+even if it is a valid escape sequence for a regular expression.
 
 The solution is to use Python's raw string notation for regular expression
 patterns; backslashes are not handled in any special way in a string literal
@@ -163,7 +166,7 @@ The special characters are:
    If you're not using a raw string to express the pattern, remember that Python
    also uses the backslash as an escape sequence in string literals; if the escape
    sequence isn't recognized by Python's parser, it will generate a
-   :exc:`DeprecationWarning` and in the future this will become a :exc:`Syntaxerror`.
+   :exc:`DeprecationWarning` and in the future this will become a :exc:`SyntaxError`.
    However, if Python would recognize the resulting sequence, the backslash should
    be repeated twice.  This is complicated and hard to understand, so it's highly
    recommended that you use raw strings for all but the simplest expressions.
