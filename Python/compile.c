@@ -1111,10 +1111,12 @@ stack_effect(int opcode, int oparg, int jump)
             return 1;
         case GET_YIELD_FROM_ITER:
             return 0;
-        case FORMAT_VALUE:
-            /* If there's a fmt_spec on the stack, we go from 2->1,
-               else 1->1. */
-            return (oparg & FVS_MASK) == FVS_HAVE_SPEC ? -1 : 0;
+        case CONVERT_VALUE:
+            return 0;
+        case FORMAT_WITH_SPEC:
+            return -1;
+        case FORMAT_SIMPLE:
+            return 0;
         case LOAD_METHOD:
             return 1;
         default:
@@ -3711,25 +3713,25 @@ compiler_formatted_value(struct compiler *c, expr_ty e)
 
     /* Evaluate the expression to be formatted. */
     VISIT(c, expr, e->v.FormattedValue.value);
-
-    switch (e->v.FormattedValue.conversion) {
-    case 's': oparg = FVC_STR;   break;
-    case 'r': oparg = FVC_REPR;  break;
-    case 'a': oparg = FVC_ASCII; break;
-    case -1:  oparg = FVC_NONE;  break;
-    default:
-        PyErr_SetString(PyExc_SystemError,
-                        "Unrecognized conversion character");
-        return 0;
+    if (e->v.FormattedValue.conversion != -1) {
+        switch (e->v.FormattedValue.conversion) {
+        case 's': oparg = FVC_STR;   break;
+        case 'r': oparg = FVC_REPR;  break;
+        case 'a': oparg = FVC_ASCII; break;
+        default:
+            PyErr_SetString(PyExc_SystemError,
+                            "Unrecognized conversion character");
+            return 0;
+        }
+        ADDOP_I(c, CONVERT_VALUE, oparg);
     }
     if (e->v.FormattedValue.format_spec) {
-        /* Evaluate the format spec, and update our opcode arg. */
+        /* Evaluate the format spec, and emit format opcode. */
         VISIT(c, expr, e->v.FormattedValue.format_spec);
-        oparg |= FVS_HAVE_SPEC;
+        ADDOP(c, FORMAT_WITH_SPEC);
+    } else {
+        ADDOP(c, FORMAT_SIMPLE);
     }
-
-    /* And push our opcode and oparg */
-    ADDOP_I(c, FORMAT_VALUE, oparg);
     return 1;
 }
 

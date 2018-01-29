@@ -84,6 +84,9 @@ def_op('BINARY_TRUE_DIVIDE', 27)
 def_op('INPLACE_FLOOR_DIVIDE', 28)
 def_op('INPLACE_TRUE_DIVIDE', 29)
 
+def_op('FORMAT_SIMPLE', 40)
+def_op('FORMAT_WITH_SPEC', 41)
+
 def_op('GET_AITER', 50)
 def_op('GET_ANEXT', 51)
 def_op('BEFORE_ASYNC_WITH', 52)
@@ -203,7 +206,7 @@ def_op('BUILD_SET_UNPACK', 153)
 
 jrel_op('SETUP_ASYNC_WITH', 154)
 
-def_op('FORMAT_VALUE', 155)
+
 def_op('BUILD_CONST_KEY_MAP', 156)
 def_op('BUILD_STRING', 157)
 def_op('BUILD_TUPLE_UNPACK_WITH_CALL', 158)
@@ -212,5 +215,7 @@ name_op('LOAD_METHOD', 160)
 def_op('CALL_METHOD', 161)
 jrel_op('CALL_FINALLY', 162)
 def_op('POP_FINALLY', 163)
+
+def_op('CONVERT_VALUE', 164)
 
 del def_op, name_op, jrel_op, jabs_op

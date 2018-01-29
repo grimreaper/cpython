@@ -30,6 +30,8 @@ extern "C" {
 #define BINARY_TRUE_DIVIDE       27
 #define INPLACE_FLOOR_DIVIDE     28
 #define INPLACE_TRUE_DIVIDE      29
+#define FORMAT_SIMPLE            40
+#define FORMAT_WITH_SPEC         41
 #define GET_AITER                50
 #define GET_ANEXT                51
 #define BEFORE_ASYNC_WITH        52
@@ -119,7 +121,6 @@ extern "C" {
 #define BUILD_TUPLE_UNPACK      152
 #define BUILD_SET_UNPACK        153
 #define SETUP_ASYNC_WITH        154
-#define FORMAT_VALUE            155
 #define BUILD_CONST_KEY_MAP     156
 #define BUILD_STRING            157
 #define BUILD_TUPLE_UNPACK_WITH_CALL 158
@@ -127,6 +128,7 @@ extern "C" {
 #define CALL_METHOD             161
 #define CALL_FINALLY            162
 #define POP_FINALLY             163
+#define CONVERT_VALUE           164
 
 /* EXCEPT_HANDLER is a special, implicit block type which is created when
    entering an except handler. It is not an opcode but we define it here
