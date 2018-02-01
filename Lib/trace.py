@@ -720,7 +720,7 @@ def main():
             globs = {
                 '__name__': '__main__',
                 '__file__': code.co_filename,
-                '__package__': module_name,
+                '__package__': mod_spec.parent,
                 '__loader__': mod_spec.loader,
                 "__spec__": mod_spec,
                 '__cached__': None,
