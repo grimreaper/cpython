@@ -11,8 +11,8 @@ import _overlapped
 import _winapi
 
 import asyncio
-from asyncio import test_utils
 from asyncio import windows_events
+from test.test_asyncio import utils as test_utils
 
 
 class UpperProto(asyncio.Protocol):
@@ -39,7 +39,7 @@ class ProactorTests(test_utils.TestCase):
     def test_close(self):
         a, b = socket.socketpair()
         trans = self.loop._make_socket_transport(a, asyncio.Protocol())
-        f = asyncio.ensure_future(self.loop.sock_recv(b, 100))
+        f = asyncio.ensure_future(self.loop.sock_recv(b, 100), loop=self.loop)
         trans.close()
         self.loop.run_until_complete(f)
         self.assertEqual(f.result(), b'')
