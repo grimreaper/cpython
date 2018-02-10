@@ -1446,7 +1446,7 @@ PyCArrayType_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     if (stgdict->format == NULL)
         goto error;
     stgdict->ndim = itemdict->ndim + 1;
-    stgdict->shape = PyMem_Malloc(sizeof(Py_ssize_t) * stgdict->ndim);
+    stgdict->shape = PyMem_Malloc(sizeof(Py_ssize_t) * stgdict->ndim * 2);
     if (stgdict->shape == NULL) {
         PyErr_NoMemory();
         goto error;
@@ -1456,11 +1456,7 @@ PyCArrayType_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         memmove(&stgdict->shape[1], itemdict->shape,
             sizeof(Py_ssize_t) * (stgdict->ndim - 1));
     }
-    stgdict->strides = PyMem_Malloc(sizeof(Py_ssize_t) * stgdict->ndim);
-    if (stgdict->strides == NULL) {
-        PyErr_NoMemory();
-        goto error;
-    }
+    stgdict->strides = stgdict->shape + stgdict->ndim;
     if (stgdict->ndim > 1) {
         memmove(&stgdict->strides[1], itemdict->strides,
             sizeof(Py_ssize_t) * (stgdict->ndim - 1));

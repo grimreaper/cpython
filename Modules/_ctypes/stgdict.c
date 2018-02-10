@@ -45,7 +45,6 @@ PyCStgDict_dealloc(StgDictObject *self)
     PyCStgDict_clear(self);
     PyMem_Free(self->format);
     PyMem_Free(self->shape);
-    PyMem_Free(self->strides);
     PyMem_Free(self->ffi_type_pointer.elements);
     PyDict_Type.tp_dealloc((PyObject *)self);
 }
@@ -77,7 +76,6 @@ PyCStgDict_clone(StgDictObject *dst, StgDictObject *src)
     dst->format = NULL;
     PyMem_Free(dst->shape);
     dst->shape = NULL;
-    PyMem_Free(dst->strides);
     dst->strides = NULL;
     dst->ffi_type_pointer.elements = NULL;
 
@@ -102,22 +100,18 @@ PyCStgDict_clone(StgDictObject *dst, StgDictObject *src)
         strcpy(dst->format, src->format);
     }
     if (src->shape) {
-        dst->shape = PyMem_Malloc(sizeof(Py_ssize_t) * src->ndim);
+        dst->shape = PyMem_Malloc(sizeof(Py_ssize_t) * src->ndim * 2);
         if (dst->shape == NULL) {
             PyErr_NoMemory();
             return -1;
         }
         memcpy(dst->shape, src->shape,
                sizeof(Py_ssize_t) * src->ndim);
-    }
-    if (src->strides) {
-        dst->strides = PyMem_Malloc(sizeof(Py_ssize_t) * src->ndim);
-        if (dst->strides == NULL) {
-            PyErr_NoMemory();
-            return -1;
+        if(src->strides) {
+            dst->strides = dst->shape + src->ndim;
+            memcpy(dst->strides, src->strides,
+                sizeof(Py_ssize_t) * src->ndim);
         }
-        memcpy(dst->strides, src->strides,
-               sizeof(Py_ssize_t) * src->ndim);
     }
 
     if (src->ffi_type_pointer.elements == NULL)
