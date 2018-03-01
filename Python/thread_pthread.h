@@ -152,6 +152,24 @@ PyThread__init_thread(void)
  * Thread support.
  */
 
+typedef struct {
+    void (*func) (void *);
+    void *arg;
+} pthread_func;
+
+static void *
+pthread_helper_func(void *fn)
+{
+    pthread_func *pfn = fn;
+
+    void (*func)(void *) = pfn->func;
+    void *arg = pfn->arg;
+
+    PyMem_RawFree((void *)fn);
+    func(arg);
+
+    return NULL;
+}
 
 unsigned long
 PyThread_start_new_thread(void (*func)(void *), void *arg)
@@ -188,21 +206,32 @@ PyThread_start_new_thread(void (*func)(void *), void *arg)
     pthread_attr_setscope(&attrs, PTHREAD_SCOPE_SYSTEM);
 #endif
 
+    pthread_func *fn = (pthread_func *)PyMem_RawMalloc(sizeof (pthread_func));
+
+    if (fn == NULL)
+      return PYTHREAD_INVALID_THREAD_ID;
+
+    fn->func = func;
+    fn->arg = arg;
+
     status = pthread_create(&th,
 #if defined(THREAD_STACK_SIZE) || defined(PTHREAD_SYSTEM_SCHED_SUPPORTED)
                              &attrs,
 #else
                              (pthread_attr_t*)NULL,
 #endif
-                             (void* (*)(void *))func,
-                             (void *)arg
+                             pthread_helper_func,
+                             fn
                              );
 
 #if defined(THREAD_STACK_SIZE) || defined(PTHREAD_SYSTEM_SCHED_SUPPORTED)
     pthread_attr_destroy(&attrs);
 #endif
-    if (status != 0)
+
+    if (status != 0) {
+        PyMem_RawFree((void *)fn);
         return PYTHREAD_INVALID_THREAD_ID;
+    }
 
     pthread_detach(th);
 
