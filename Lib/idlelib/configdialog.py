@@ -96,6 +96,7 @@ class ConfigDialog(Toplevel):
             highpage: HighPage
             fontpage: FontPage
             keyspage: KeysPage
+            editpage: EditPage
             genpage: GenPage
             extpage: self.create_page_extensions
 
@@ -108,11 +109,13 @@ class ConfigDialog(Toplevel):
         self.highpage = HighPage(note)
         self.fontpage = FontPage(note, self.highpage)
         self.keyspage = KeysPage(note)
+        self.editpage = EditPage(note)
         self.genpage = GenPage(note)
         self.extpage = self.create_page_extensions()
         note.add(self.fontpage, text='Fonts/Tabs')
         note.add(self.highpage, text='Highlights')
         note.add(self.keyspage, text=' Keys ')
+        note.add(self.editpage, text=' Editor ')
         note.add(self.genpage, text=' General ')
         note.add(self.extpage, text='Extensions')
         note.enable_traversal()
@@ -1756,6 +1759,98 @@ class KeysPage(Frame):
         self.set_keys_type()
 
 
+class EditPage(Frame):
+
+    def __init__(self, master):
+        super().__init__(master)
+        self.create_page_editor()
+        self.load_editor_cfg()
+
+    def create_page_editor(self):
+        """Return frame of widgets for Editor tab.
+
+        Enable users to provisionally change editor options. Function
+        load_editor_cfg intializes tk variables using idleConf.
+        Radiobuttons save_ask_on and save_auto_on set var autosave.
+        Entry boxes format_width_int and context_int set var
+        format_width and context_lines.  Setting var_name invokes
+        the default callback that adds option to changes.
+
+        Widgets for EditPage(Frame):  (*) widgets bound to self
+            frame_editor: LabelFrame
+                frame_save: Frame
+                    run_save_title: Label
+                    (*)save_ask_on: Radiobutton - autosave
+                    (*)save_auto_on: Radiobutton - autosave
+                frame_format: Frame
+                    format_width_title: Label
+                    (*)format_width_int: Entry - format_width
+                frame_context: Frame
+                    context_title: Label
+                    (*)context_int: Entry - context_lines
+        """
+        self.autosave = tracers.add(
+                IntVar(self), ('main', 'General', 'autosave'))
+        self.format_width = tracers.add(
+                StringVar(self), ('extensions', 'FormatParagraph', 'max-width'))
+        self.context_lines = tracers.add(
+                StringVar(self), ('extensions', 'CodeContext', 'maxlines'))
+
+        # Create widgets:
+        # Section frames.
+        frame_editor = LabelFrame(self, borderwidth=2, relief=GROOVE,
+                                  text=' Editor Preferences')
+
+        # Frame_editor.
+        frame_save = Frame(frame_editor, borderwidth=0)
+        run_save_title = Label(frame_save, text='At Start of Run (F5)  ')
+        self.save_ask_on = Radiobutton(
+                frame_save, variable=self.autosave, value=0,
+                text="Prompt to Save")
+        self.save_auto_on = Radiobutton(
+                frame_save, variable=self.autosave, value=1,
+                text='No Prompt')
+
+        frame_format = Frame(frame_editor, borderwidth=0)
+        format_width_title = Label(frame_format,
+                                   text='Format Paragraph Max Width')
+        self.format_width_int = Entry(
+                frame_format, textvariable=self.format_width, width=4)
+
+        frame_context = Frame(frame_editor, borderwidth=0)
+        context_title = Label(frame_context, text='Max Context Lines :')
+        self.context_int = Entry(
+                frame_context, textvariable=self.context_lines, width=3)
+
+        # Pack widgets:
+        # Body.
+        frame_editor.pack(side=TOP, padx=5, pady=5, expand=TRUE, fill=BOTH)
+
+        # frame_save.
+        frame_save.pack(side=TOP, padx=5, pady=0, fill=X)
+        run_save_title.pack(side=LEFT, anchor=W, padx=5, pady=5)
+        self.save_auto_on.pack(side=RIGHT, anchor=W, padx=5, pady=5)
+        self.save_ask_on.pack(side=RIGHT, anchor=W, padx=5, pady=5)
+        # frame_format.
+        frame_format.pack(side=TOP, padx=5, pady=0, fill=X)
+        format_width_title.pack(side=LEFT, anchor=W, padx=5, pady=5)
+        self.format_width_int.pack(side=TOP, padx=10, pady=5)
+        # frame_context.
+        frame_context.pack(side=TOP, padx=5, pady=0, fill=X)
+        context_title.pack(side=LEFT, anchor=W, padx=5, pady=5)
+        self.context_int.pack(side=TOP, padx=5, pady=5)
+
+    def load_editor_cfg(self):
+        "Load current configuration settings for the editor options."
+        # Set variables for editor windows.
+        self.autosave.set(idleConf.GetOption(
+                'main', 'General', 'autosave', default=0, type='bool'))
+        self.format_width.set(idleConf.GetOption(
+                'extensions', 'FormatParagraph', 'max-width', type='int'))
+        self.context_lines.set(idleConf.GetOption(
+                'extensions', 'CodeContext', 'maxlines', type='int'))
+
+
 class GenPage(Frame):
 
     def __init__(self, master):
@@ -1769,8 +1864,7 @@ class GenPage(Frame):
         Enable users to provisionally change general options. Function
         load_general_cfg intializes tk variables and helplist using
         idleConf.  Radiobuttons startup_shell_on and startup_editor_on
-        set var startup_edit. Radiobuttons save_ask_on and save_auto_on
-        set var autosave. Entry boxes win_width_int and win_height_int
+        set var startup_edit.  Entry boxes win_width_int and win_height_int
         set var win_width and win_height.  Setting var_name invokes the
         default callback that adds option to changes.
 
@@ -1804,17 +1898,6 @@ class GenPage(Frame):
                     paren_time_title: Label
                     (*)paren_flash_time: Entry - flash_delay
                     (*)bell_on: Checkbutton - paren_bell
-            frame_editor: LabelFrame
-                frame_save: Frame
-                    run_save_title: Label
-                    (*)save_ask_on: Radiobutton - autosave
-                    (*)save_auto_on: Radiobutton - autosave
-                frame_format: Frame
-                    format_width_title: Label
-                    (*)format_width_int: Entry - format_width
-                frame_context: Frame
-                    context_title: Label
-                    (*)context_int: Entry - context_lines
             frame_help: LabelFrame
                 frame_helplist: Frame
                     frame_helplist_buttons: Frame
@@ -1840,19 +1923,10 @@ class GenPage(Frame):
         self.paren_bell = tracers.add(
                 BooleanVar(self), ('extensions', 'ParenMatch', 'bell'))
 
-        self.autosave = tracers.add(
-                IntVar(self), ('main', 'General', 'autosave'))
-        self.format_width = tracers.add(
-                StringVar(self), ('extensions', 'FormatParagraph', 'max-width'))
-        self.context_lines = tracers.add(
-                StringVar(self), ('extensions', 'CodeContext', 'maxlines'))
-
         # Create widgets:
         # Section frames.
         frame_window = LabelFrame(self, borderwidth=2, relief=GROOVE,
                                   text=' Window Preferences')
-        frame_editor = LabelFrame(self, borderwidth=2, relief=GROOVE,
-                                  text=' Editor Preferences')
         frame_help = LabelFrame(self, borderwidth=2, relief=GROOVE,
                                text=' Additional Help Sources ')
         # Frame_window.
@@ -1895,28 +1969,6 @@ class GenPage(Frame):
         self.bell_on = Checkbutton(
                 frame_paren2, text="Bell on Mismatch", variable=self.paren_bell)
 
-        # Frame_editor.
-        frame_save = Frame(frame_editor, borderwidth=0)
-        run_save_title = Label(frame_save, text='At Start of Run (F5)  ')
-        self.save_ask_on = Radiobutton(
-                frame_save, variable=self.autosave, value=0,
-                text="Prompt to Save")
-        self.save_auto_on = Radiobutton(
-                frame_save, variable=self.autosave, value=1,
-                text='No Prompt')
-
-        frame_format = Frame(frame_editor, borderwidth=0)
-        format_width_title = Label(frame_format,
-                                   text='Format Paragraph Max Width')
-        self.format_width_int = Entry(
-                frame_format, textvariable=self.format_width, width=4)
-
-        frame_context = Frame(frame_editor, borderwidth=0)
-        context_title = Label(frame_context, text='Max Context Lines :')
-        self.context_int = Entry(
-                frame_context, textvariable=self.context_lines, width=3)
-
-
         # frame_help.
         frame_helplist = Frame(frame_help)
         frame_helplist_buttons = Frame(frame_helplist)
@@ -1940,7 +1992,6 @@ class GenPage(Frame):
         # Pack widgets:
         # Body.
         frame_window.pack(side=TOP, padx=5, pady=5, expand=TRUE, fill=BOTH)
-        frame_editor.pack(side=TOP, padx=5, pady=5, expand=TRUE, fill=BOTH)
         frame_help.pack(side=TOP, padx=5, pady=5, expand=TRUE, fill=BOTH)
         # frame_run.
         frame_run.pack(side=TOP, padx=5, pady=0, fill=X)
@@ -1966,20 +2017,6 @@ class GenPage(Frame):
         paren_time_title.pack(side=LEFT, anchor=W, padx=5)
         self.bell_on.pack(side=RIGHT, anchor=E, padx=15, pady=5)
         self.paren_flash_time.pack(side=TOP, anchor=W, padx=15, pady=5)
-
-        # frame_save.
-        frame_save.pack(side=TOP, padx=5, pady=0, fill=X)
-        run_save_title.pack(side=LEFT, anchor=W, padx=5, pady=5)
-        self.save_auto_on.pack(side=RIGHT, anchor=W, padx=5, pady=5)
-        self.save_ask_on.pack(side=RIGHT, anchor=W, padx=5, pady=5)
-        # frame_format.
-        frame_format.pack(side=TOP, padx=5, pady=0, fill=X)
-        format_width_title.pack(side=LEFT, anchor=W, padx=5, pady=5)
-        self.format_width_int.pack(side=TOP, padx=10, pady=5)
-        # frame_context.
-        frame_context.pack(side=TOP, padx=5, pady=0, fill=X)
-        context_title.pack(side=LEFT, anchor=W, padx=5, pady=5)
-        self.context_int.pack(side=TOP, padx=5, pady=5)
 
         # frame_help.
         frame_helplist_buttons.pack(side=RIGHT, padx=5, pady=5, fill=Y)
@@ -2007,14 +2044,6 @@ class GenPage(Frame):
                 'extensions', 'ParenMatch', 'flash-delay', type='int'))
         self.paren_bell.set(idleConf.GetOption(
                 'extensions', 'ParenMatch', 'bell'))
-
-        # Set variables for editor windows.
-        self.autosave.set(idleConf.GetOption(
-                'main', 'General', 'autosave', default=0, type='bool'))
-        self.format_width.set(idleConf.GetOption(
-                'extensions', 'FormatParagraph', 'max-width', type='int'))
-        self.context_lines.set(idleConf.GetOption(
-                'extensions', 'CodeContext', 'maxlines', type='int'))
 
         # Set additional help sources.
         self.user_helplist = idleConf.GetAllExtraHelpSourcesList()
