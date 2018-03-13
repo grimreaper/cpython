@@ -1345,6 +1345,10 @@ class LongTest(unittest.TestCase):
                 self.assertEqual(type(value << shift), int)
                 self.assertEqual(type(value >> shift), int)
 
+    def test_int_always_is_integer(self):
+        # Issue #26680: Incorporating number.is_integer into int
+        self.assertTrue(all(x.is_integer() for x in (-1, 0, 1, 42)))
+
 
 if __name__ == "__main__":
     unittest.main()

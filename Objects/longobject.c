@@ -5074,6 +5074,12 @@ long_round(PyObject *self, PyObject *args)
     return result;
 }
 
+static PyObject *
+long_is_integer(PyObject *v)
+{
+    Py_RETURN_TRUE;
+}
+
 /*[clinic input]
 int.__sizeof__ -> Py_ssize_t
 
@@ -5297,6 +5303,8 @@ static PyMethodDef long_methods[] = {
     {"__round__",       (PyCFunction)long_round, METH_VARARGS,
      "Rounding an Integral returns itself.\n"
      "Rounding with an ndigits argument also returns an integer."},
+    {"is_integer",       (PyCFunction)long_is_integer, METH_NOARGS,
+      "Always True for int objects."},
     INT___GETNEWARGS___METHODDEF
     INT___FORMAT___METHODDEF
     INT___SIZEOF___METHODDEF
