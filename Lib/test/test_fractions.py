@@ -631,5 +631,17 @@ class FractionTest(unittest.TestCase):
         r = F(13, 7)
         self.assertRaises(AttributeError, setattr, r, 'a', 10)
 
+    def test_is_integer(self):
+        # Issue #26680: Incorporating number.is_integer into Fraction
+        self.assertTrue(F(-1, 1).is_integer())
+        self.assertTrue(F(0, 1).is_integer())
+        self.assertTrue(F(1, 1).is_integer())
+        self.assertTrue(F(42, 1).is_integer())
+        self.assertTrue(F(2, 2).is_integer())
+        self.assertTrue(F(8, 4).is_integer())
+        self.assertFalse(F(1, 2).is_integer())
+        self.assertFalse(F(1, 3).is_integer())
+        self.assertFalse(F(2, 3).is_integer())
+
 if __name__ == '__main__':
     unittest.main()
