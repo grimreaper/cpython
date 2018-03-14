@@ -621,6 +621,11 @@ Decimal objects
       Return :const:`True` if the argument is either positive or negative
       infinity and :const:`False` otherwise.
 
+   .. method:: is_integer()
+
+      Return :const:`True` if the argument is a finite integral value and
+      :const:`False` otherwise.
+
    .. method:: is_nan()
 
       Return :const:`True` if the argument is a (quiet or signaling) NaN and
@@ -1213,6 +1218,12 @@ In addition to the three supplied contexts, new contexts can be created with the
    .. method:: is_infinite(x)
 
       Returns ``True`` if *x* is infinite; otherwise returns ``False``.
+
+
+   .. method:: is_integer(x)
+
+      Returns ``True`` if *x* is finite and integral; otherwise
+      returns ``False``.
 
 
    .. method:: is_nan(x)
