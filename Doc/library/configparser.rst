@@ -319,6 +319,13 @@ from ``get()`` calls.
    keys used in the chain of references do not have to be specified in any
    specific order in the configuration file.
 
+   To include a bare ``%`` the user can escape it by using ``%%``.
+
+   .. code-block:: ini
+
+      [escape]
+      unit: %% (in percent)
+
    With ``interpolation`` set to ``None``, the parser would simply return
    ``%(my_dir)s/Pictures`` as the value of ``my_pictures`` and
    ``%(home_dir)s/lumberjack`` as the value of ``my_dir``.
@@ -330,7 +337,8 @@ from ``get()`` calls.
    using ``${section:option}`` to denote a value from a foreign section.
    Interpolation can span multiple levels.  For convenience, if the
    ``section:`` part is omitted, interpolation defaults to the current section
-   (and possibly the default values from the special section).
+   (and possibly the default values from the special section). To use a bare
+   ``$`` the user can escape it by writing ``$$``.
 
    For example, the configuration specified above with basic interpolation,
    would look like this with extended interpolation:
@@ -341,6 +349,9 @@ from ``get()`` calls.
       home_dir: /Users
       my_dir: ${home_dir}/lumberjack
       my_pictures: ${my_dir}/Pictures
+
+      [escape]
+      price: $$ (a single dollar sign)
 
    Values from other sections can be fetched as well:
 
