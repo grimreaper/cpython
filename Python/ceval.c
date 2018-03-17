@@ -72,7 +72,7 @@ static void format_kwargs_mapping_error(PyObject *func, PyObject *kwargs);
 
 typedef PyObject *(*convertion_func_ptr)(PyObject *);
 
-static const convertion_func_ptr CONVERTION_FUNCTIONS[4] = {
+static const convertion_func_ptr CONVERSION_FUNCTIONS[4] = {
     [FVC_STR] = PyObject_Str,
     [FVC_REPR] = PyObject_Repr,
     [FVC_ASCII] = PyObject_ASCII
@@ -3297,7 +3297,7 @@ main_loop:
             PyObject *value = POP();
             convertion_func_ptr  conv_fn;
             assert(oparg >= FVC_STR && oparg <= FVC_ASCII);
-            conv_fn = CONVERTION_FUNCTIONS[oparg];
+            conv_fn = CONVERSION_FUNCTIONS[oparg];
             result = conv_fn(value);
             Py_DECREF(value);
             if (result == NULL) {
