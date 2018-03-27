@@ -347,7 +347,17 @@ class GzipFile(_compression.BaseStream):
         return self.mode == WRITE
 
     def seekable(self):
-        return True
+        try:
+            # See if the underlying buffer is seek-able.
+            return self.fileobj.seekable()
+        except AttributeError:
+            # See if we can use the seek and tell methods to seek
+            # to the current location.
+            try:
+                self.fileobj.seek(self.fileobj.tell())
+                return True
+            except (AttributeError, OSError, IOError):
+                return False
 
     def seek(self, offset, whence=io.SEEK_SET):
         if self.mode == WRITE:
