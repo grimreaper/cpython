@@ -14,74 +14,26 @@ people commonly encounter when trying to work with Unicode.
 Introduction to Unicode
 =======================
 
-History of Character Codes
---------------------------
-
-In 1968, the American Standard Code for Information Interchange, better known by
-its acronym ASCII, was standardized.  ASCII defined numeric codes for various
-characters, with the numeric values running from 0 to 127.  For example, the
-lowercase letter 'a' is assigned 97 as its code value.
-
-ASCII was an American-developed standard, so it only defined unaccented
-characters.  There was an 'e', but no 'é' or 'Í'.  This meant that languages
-which required accented characters couldn't be faithfully represented in ASCII.
-(Actually the missing accents matter for English, too, which contains words such
-as 'naïve' and 'café', and some publications have house styles which require
-spellings such as 'coöperate'.)
-
-For a while people just wrote programs that didn't display accents.
-In the mid-1980s an Apple II BASIC program written by a French speaker
-might have lines like these:
-
-.. code-block:: basic
-
-   PRINT "MISE A JOUR TERMINEE"
-   PRINT "PARAMETRES ENREGISTRES"
-
-Those messages should contain accents (terminée, paramètre, enregistrés) and
-they just look wrong to someone who can read French.
-
-In the 1980s, almost all personal computers were 8-bit, meaning that bytes could
-hold values ranging from 0 to 255.  ASCII codes only went up to 127, so some
-machines assigned values between 128 and 255 to accented characters.  Different
-machines had different codes, however, which led to problems exchanging files.
-Eventually various commonly used sets of values for the 128--255 range emerged.
-Some were true standards, defined by the International Organization for
-Standardization, and some were *de facto* conventions that were invented by one
-company or another and managed to catch on.
-
-255 characters aren't very many.  For example, you can't fit both the accented
-characters used in Western Europe and the Cyrillic alphabet used for Russian
-into the 128--255 range because there are more than 128 such characters.
-
-You could write files using different codes (all your Russian files in a coding
-system called KOI8, all your French files in a different coding system called
-Latin1), but what if you wanted to write a French document that quotes some
-Russian text?  In the 1980s people began to want to solve this problem, and the
-Unicode standardization effort began.
-
-Unicode started out using 16-bit characters instead of 8-bit characters.  16
-bits means you have 2^16 = 65,536 distinct values available, making it possible
-to represent many different characters from many different alphabets; an initial
-goal was to have Unicode contain the alphabets for every single human language.
-It turns out that even 16 bits isn't enough to meet that goal, and the modern
-Unicode specification uses a wider range of codes, 0 through 1,114,111 (
-``0x10FFFF`` in base 16).
-
-There's a related ISO standard, ISO 10646.  Unicode and ISO 10646 were
-originally separate efforts, but the specifications were merged with the 1.1
-revision of Unicode.
-
-(This discussion of Unicode's history is highly simplified.  The
-precise historical details aren't necessary for understanding how to
-use Unicode effectively, but if you're curious, consult the Unicode
-consortium site listed in the References or
-the `Wikipedia entry for Unicode <https://en.wikipedia.org/wiki/Unicode#History>`_
-for more information.)
-
-
 Definitions
 -----------
+
+Early computers often had limited repertoires of characters.  A
+machine might have had 7-bit characters, for example, allowing 128
+different values.  128 values is enough to hold the uppercase and
+lowercase Latin alphabet, numbers, various punctuation marks, and some
+control characters, but it's not enough to include the accented
+characters used in Western Europe and the Cyrillic alphabet used for
+Russian.
+
+Today's programs need to be able to handle a wider variety of
+characters.  Applications are often internationalized to display
+messages and output in a variety of user-selectable languages; the
+same program might need to output an error message in English, French,
+Japanese, Hebrew, or Russian.  Web content can be written in any of
+these languages and can also include a variety of emoji symbols.  The
+solution has been to use Unicode for representing text.  The Unicode
+specifications are continually revised and updated to add new
+languages and symbols.
 
 A **character** is the smallest possible component of a text.  'A', 'B', 'C',
 etc., are all different characters.  So are 'È' and 'Í'.  Characters are
