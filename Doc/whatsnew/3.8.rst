@@ -140,6 +140,11 @@ Changes in the Python API
   a database if it does not exist.
   (Contributed by Serhiy Storchaka in :issue:`32749`.)
 
+* Deleting a key from a read-only :mod:`dbm` database (:mod:`dbm.dumb`,
+  :mod:`dbm.gnu` or :mod:`dbm.ndbm`) raises :attr:`error` (:exc:`dbm.dumb.error`,
+  :exc:`dbm.gnu.error` or :exc:`dbm.ndbm.error`) instead of :exc:`KeyError`.
+  (Contributed by Xiang Zhang in :issue:`33106`.)
+
 
 CPython bytecode changes
 ------------------------
