@@ -24,7 +24,7 @@ class _pickle.UnpicklerMemoProxy "UnpicklerMemoProxyObject *" "&UnpicklerMemoPro
    Bump DEFAULT_PROTOCOL only when the oldest still supported version of Python
    already includes it. */
 enum {
-    HIGHEST_PROTOCOL = 4,
+    HIGHEST_PROTOCOL = 5,
     DEFAULT_PROTOCOL = 4
 };
 
@@ -101,7 +101,10 @@ enum opcode {
     NEWOBJ_EX        = '\x92',
     STACK_GLOBAL     = '\x93',
     MEMOIZE          = '\x94',
-    FRAME            = '\x95'
+    FRAME            = '\x95',
+
+    /* Protocol 5 */
+    BYTEARRAY8       = '\x96'
 };
 
 enum {
@@ -665,6 +668,7 @@ typedef struct UnpicklerObject {
     Py_ssize_t prefetched_idx;  /* index of first prefetched byte */
 
     PyObject *read;             /* read() method of the input stream. */
+    PyObject *readinto;         /* readinto() method of the input stream. */
     PyObject *readline;         /* readline() method of the input stream. */
     PyObject *peek;             /* peek() method of the input stream, or NULL */
 
@@ -1307,6 +1311,65 @@ _Unpickler_ReadImpl(UnpicklerObject *self, char **s, Py_ssize_t n)
     return n;
 }
 
+/* Read `n` bytes from the unpickler's data source, storing the result in `buf`.
+ *
+ * This should only be used for non-small data reads where potentially
+ * avoiding a copy is beneficial.  This method does not try to prefetch
+ * more data into the input buffer.
+ *
+ * _Unpickler_Read() is recommended in most cases.
+ */
+static Py_ssize_t
+_Unpickler_ReadInto(UnpicklerObject *self, char *buf, Py_ssize_t n)
+{
+    assert(n != READ_WHOLE_LINE);
+
+    /* Try to satisfy read from buffer */
+    if (n <= self->input_len - self->next_read_idx) {
+        memcpy(buf, self->input_buffer + self->next_read_idx, n);
+        self->next_read_idx += n;
+        return n;
+    }
+
+    /* Read from file */
+    if (_Unpickler_SkipConsumed(self) < 0)
+        return -1;
+
+    Py_ssize_t read_size;
+
+    if (self->readinto == NULL) {
+        /* Call read() and memcpy */
+        /* XXX do we want this fallback? pickle.py doesn't have it */
+        char *s;
+        read_size = _Unpickler_ReadImpl(self, &s, n);
+        if (read_size < 0) {
+            return -1;
+        }
+        assert(read_size == n);
+        memcpy(buf, s, n);
+        return n;
+    }
+
+    /* Call readinto() into user buffer */
+    PyObject *buf_obj = PyMemoryView_FromMemory(buf, n, PyBUF_WRITE);
+    if (buf_obj == NULL)
+        return -1;
+    PyObject *read_size_obj = _Pickle_FastCall(self->readinto, buf_obj);
+    read_size = PyLong_AsSsize_t(read_size_obj);
+    Py_DECREF(read_size_obj);
+
+    if (read_size < 0) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_ValueError,
+                            "readinto() returned negative size");
+        }
+        return -1;
+    }
+    if (read_size < n)
+        return bad_readline();
+    return n;
+}
+
 /* Read `n` bytes from the unpickler's data source, storing the result in `*s`.
 
    This should be used for all data reads, rather than accessing the unpickler's
@@ -1472,6 +1535,7 @@ _Unpickler_New(void)
     self->next_read_idx = 0;
     self->prefetched_idx = 0;
     self->read = NULL;
+    self->readinto = NULL;
     self->readline = NULL;
     self->peek = NULL;
     self->encoding = NULL;
@@ -1502,9 +1566,14 @@ _Unpickler_SetInputStream(UnpicklerObject *self, PyObject *file)
 {
     _Py_IDENTIFIER(peek);
     _Py_IDENTIFIER(read);
+    _Py_IDENTIFIER(readinto);
     _Py_IDENTIFIER(readline);
 
+    /* Both 'peek' and 'readline' are optional, for compatibility */
     if (_PyObject_LookupAttrId(file, &PyId_peek, &self->peek) < 0) {
+        return -1;
+    }
+    if (_PyObject_LookupAttrId(file, &PyId_readinto, &self->readinto) < 0) {
         return -1;
     }
     (void)_PyObject_LookupAttrId(file, &PyId_read, &self->read);
@@ -1515,6 +1584,7 @@ _Unpickler_SetInputStream(UnpicklerObject *self, PyObject *file)
                             "file must have 'read' and 'readline' attributes");
         }
         Py_CLEAR(self->read);
+        Py_CLEAR(self->readinto);
         Py_CLEAR(self->readline);
         Py_CLEAR(self->peek);
         return -1;
@@ -2278,6 +2348,62 @@ save_bytes(PicklerObject *self, PyObject *obj)
 
         if (_Pickler_write_bytes(self, header, len,
                                  PyBytes_AS_STRING(obj), size, obj) < 0)
+        {
+            return -1;
+        }
+
+        if (memo_put(self, obj) < 0)
+            return -1;
+
+        return 0;
+    }
+}
+
+static int
+save_bytearray(PicklerObject *self, PyObject *obj)
+{
+    if (self->proto < 5) {
+        /* Older pickle protocols do not have an opcode for pickling
+         * bytearrays. */
+        PyObject *reduce_value = NULL;
+        int status;
+
+        if (PyByteArray_GET_SIZE(obj) == 0) {
+            reduce_value = Py_BuildValue("(O())",
+                                         (PyObject *) &PyByteArray_Type);
+        }
+        else {
+            PyObject *bytes_obj = PyBytes_FromObject(obj);
+            if (bytes_obj != NULL) {
+                reduce_value = Py_BuildValue("(O(O))",
+                                             (PyObject *) &PyByteArray_Type,
+                                             bytes_obj);
+                Py_DECREF(bytes_obj);
+            }
+        }
+        if (reduce_value == NULL)
+            return -1;
+
+        /* save_reduce() will memoize the object automatically. */
+        status = save_reduce(self, reduce_value, obj);
+        Py_DECREF(reduce_value);
+        return status;
+    }
+    else {
+        Py_ssize_t size;
+        char header[9];
+        Py_ssize_t len;
+
+        size = PyByteArray_GET_SIZE(obj);
+        if (size < 0)
+            return -1;
+
+        header[0] = BYTEARRAY8;
+        _write_size64(header + 1, size);
+        len = 9;
+
+        if (_Pickler_write_bytes(self, header, len,
+                                 PyByteArray_AS_STRING(obj), size, obj) < 0)
         {
             return -1;
         }
@@ -4018,6 +4144,10 @@ save(PicklerObject *self, PyObject *obj, int pers_save)
         status = save_tuple(self, obj);
         goto done;
     }
+    else if (type == &PyByteArray_Type) {
+        status = save_bytearray(self, obj);
+        goto done;
+    }
     else if (type == &PyType_Type) {
         status = save_type(self, obj);
         goto done;
@@ -5133,14 +5263,41 @@ load_counted_binbytes(UnpicklerObject *self, int nbytes)
         return -1;
     }
 
-    if (_Unpickler_Read(self, &s, size) < 0)
-        return -1;
-
-    bytes = PyBytes_FromStringAndSize(s, size);
+    bytes = PyBytes_FromStringAndSize(NULL, size);
     if (bytes == NULL)
+        return -1;
+    if (_Unpickler_ReadInto(self, PyBytes_AS_STRING(bytes), size) < 0)
         return -1;
 
     PDATA_PUSH(self->stack, bytes, -1);
+    return 0;
+}
+
+static int
+load_counted_bytearray(UnpicklerObject *self)
+{
+    PyObject *bytearray;
+    Py_ssize_t size;
+    char *s;
+
+    if (_Unpickler_Read(self, &s, 8) < 0)
+        return -1;
+
+    size = calc_binsize(s, 8);
+    if (size < 0) {
+        PyErr_Format(PyExc_OverflowError,
+                     "BYTEARRAY8 exceeds system's maximum size of %zd bytes",
+                     PY_SSIZE_T_MAX);
+        return -1;
+    }
+
+    bytearray = PyByteArray_FromStringAndSize(NULL, size);
+    if (bytearray == NULL)
+        return -1;
+    if (_Unpickler_ReadInto(self, PyByteArray_AS_STRING(bytearray), size) < 0)
+        return -1;
+
+    PDATA_PUSH(self->stack, bytearray, -1);
     return 0;
 }
 
@@ -6431,6 +6588,7 @@ load(UnpicklerObject *self)
         OP_ARG(SHORT_BINBYTES, load_counted_binbytes, 1)
         OP_ARG(BINBYTES, load_counted_binbytes, 4)
         OP_ARG(BINBYTES8, load_counted_binbytes, 8)
+        OP(BYTEARRAY8, load_counted_bytearray)
         OP_ARG(SHORT_BINSTRING, load_counted_binstring, 1)
         OP_ARG(BINSTRING, load_counted_binstring, 4)
         OP(STRING, load_string)
@@ -6686,6 +6844,7 @@ Unpickler_dealloc(UnpicklerObject *self)
 {
     PyObject_GC_UnTrack((PyObject *)self);
     Py_XDECREF(self->readline);
+    Py_XDECREF(self->readinto);
     Py_XDECREF(self->read);
     Py_XDECREF(self->peek);
     Py_XDECREF(self->stack);
@@ -6708,6 +6867,7 @@ static int
 Unpickler_traverse(UnpicklerObject *self, visitproc visit, void *arg)
 {
     Py_VISIT(self->readline);
+    Py_VISIT(self->readinto);
     Py_VISIT(self->read);
     Py_VISIT(self->peek);
     Py_VISIT(self->stack);
@@ -6719,6 +6879,7 @@ static int
 Unpickler_clear(UnpicklerObject *self)
 {
     Py_CLEAR(self->readline);
+    Py_CLEAR(self->readinto);
     Py_CLEAR(self->read);
     Py_CLEAR(self->peek);
     Py_CLEAR(self->stack);
@@ -7475,11 +7636,16 @@ PyInit__pickle(void)
     if (m == NULL)
         return NULL;
 
+    /* Add types */
     Py_INCREF(&Pickler_Type);
     if (PyModule_AddObject(m, "Pickler", (PyObject *)&Pickler_Type) < 0)
         return NULL;
     Py_INCREF(&Unpickler_Type);
     if (PyModule_AddObject(m, "Unpickler", (PyObject *)&Unpickler_Type) < 0)
+        return NULL;
+    Py_INCREF(&PyPickleBuffer_Type);
+    if (PyModule_AddObject(m, "PickleBuffer",
+                           (PyObject *)&PyPickleBuffer_Type) < 0)
         return NULL;
 
     st = _Pickle_GetState(m);

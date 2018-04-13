@@ -36,8 +36,10 @@ import io
 import codecs
 import _compat_pickle
 
+from _pickle import PickleBuffer
+
 __all__ = ["PickleError", "PicklingError", "UnpicklingError", "Pickler",
-           "Unpickler", "dump", "dumps", "load", "loads"]
+           "Unpickler", "dump", "dumps", "load", "loads", "PickleBuffer"]
 
 # Shortcut for use in isinstance testing
 bytes_types = (bytes, bytearray)
@@ -51,10 +53,11 @@ compatible_formats = ["1.0",            # Original protocol 0
                       "2.0",            # Protocol 2
                       "3.0",            # Protocol 3
                       "4.0",            # Protocol 4
+                      "5.0",            # Protocol 5
                       ]                 # Old format versions we can read
 
 # This is the highest protocol number we know how to read.
-HIGHEST_PROTOCOL = 4
+HIGHEST_PROTOCOL = 5
 
 # The protocol we write by default.  May be less than HIGHEST_PROTOCOL.
 # Only bump this if the oldest still supported version of Python already
@@ -167,6 +170,7 @@ BINBYTES       = b'B'   # push bytes; counted binary string argument
 SHORT_BINBYTES = b'C'   #  "     "   ;    "      "       "      " < 256 bytes
 
 # Protocol 4
+
 SHORT_BINUNICODE = b'\x8c'  # push short string; UTF-8 length < 256 bytes
 BINUNICODE8      = b'\x8d'  # push very long string
 BINBYTES8        = b'\x8e'  # push very long bytes string
@@ -177,6 +181,10 @@ NEWOBJ_EX        = b'\x92'  # like NEWOBJ but work with keyword only arguments
 STACK_GLOBAL     = b'\x93'  # same as GLOBAL but using names on the stacks
 MEMOIZE          = b'\x94'  # store top of the stack in memo
 FRAME            = b'\x95'  # indicate the beginning of a new frame
+
+# Protocol 5
+
+BYTEARRAY8       = b'\x96'  # push bytearray
 
 __all__.extend([x for x in dir() if re.match("[A-Z][A-Z0-9_]+$", x)])
 
@@ -250,6 +258,23 @@ class _Unframer:
         self.file_read = file_read
         self.file_readline = file_readline
         self.current_frame = None
+
+    def readinto(self, buf):
+        if self.current_frame:
+            n = self.current_frame.readinto(buf)
+            if n == 0 and len(buf) != 0:
+                self.current_frame = None
+                n = len(buf)
+                buf[:] = self.file_read(n)
+                return n
+            if n < len(buf):
+                raise UnpicklingError(
+                    "pickle exhausted before end of frame")
+            return n
+        else:
+            n = len(buf)
+            buf[:] = self.file_read(n)
+            return n
 
     def read(self, n):
         if self.current_frame:
@@ -735,6 +760,20 @@ class _Pickler:
         self.memoize(obj)
     dispatch[bytes] = save_bytes
 
+    def save_bytearray(self, obj):
+        if self.proto < 5:
+            if not obj:  # bytearray is empty
+                self.save_reduce(bytearray, (), obj=obj)
+            else:
+                self.save_reduce(bytearray, (bytes(obj),), obj=obj)
+            return
+        n = len(obj)
+        if n >= self.framer._FRAME_SIZE_TARGET:
+            self._write_large_bytes(BYTEARRAY8 + pack("<Q", n), obj)
+        else:
+            self.write(BYTEARRAY8 + pack("<Q", n) + obj)
+    dispatch[bytearray] = save_bytearray
+
     def save_str(self, obj):
         if self.bin:
             encoded = obj.encode('utf-8', 'surrogatepass')
@@ -1069,6 +1108,7 @@ class _Unpickler:
                                   "%s.__init__()" % (self.__class__.__name__,))
         self._unframer = _Unframer(self._file_read, self._file_readline)
         self.read = self._unframer.read
+        self.readinto = self._unframer.readinto
         self.readline = self._unframer.readline
         self.metastack = []
         self.stack = []
@@ -1254,6 +1294,17 @@ class _Unpickler:
                                   "of %d bytes" % maxsize)
         self.append(self.read(len))
     dispatch[BINBYTES8[0]] = load_binbytes8
+
+    def load_bytearray8(self):
+        len, = unpack('<Q', self.read(8))
+        if len > maxsize:
+            raise UnpicklingError("BYTEARRAY8 exceeds system's maximum size "
+                                  "of %d bytes" % maxsize)
+        #self.append(bytearray(self.read(len)))
+        b = bytearray(len)
+        self.readinto(b)
+        self.append(b)
+    dispatch[BYTEARRAY8[0]] = load_bytearray8
 
     def load_short_binstring(self):
         len = self.read(1)[0]

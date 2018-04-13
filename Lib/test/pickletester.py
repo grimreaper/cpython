@@ -58,6 +58,23 @@ class UnseekableIO(io.BytesIO):
         raise io.UnsupportedOperation
 
 
+class TrivialReadableIO:
+    """
+    A readable file object that doesn't support readinto().
+    """
+    def __init__(self, *args, **kwargs):
+        self._bio = io.BytesIO(*args, **kwargs)
+
+    def read(self, n):
+        return self._bio.read(n)
+
+    def readline(self, n=None):
+        return self._bio.readline(n)
+
+    def getvalue(self):
+        return self._bio.getvalue()
+
+
 # We can't very well test the extension registry without putting known stuff
 # in it, but we have to be careful to restore its original state.  Code
 # should do this:
@@ -883,9 +900,19 @@ class AbstractUnpickleTests(unittest.TestCase):
         dumped = b'\x80\x04\x8d\4\0\0\0\0\0\0\0\xe2\x82\xac\x00.'
         self.assertEqual(self.loads(dumped), '\u20ac\x00')
 
+    def test_bytearray8(self):
+        dumped = b'\x80\x05\x96\x03\x00\x00\x00\x00\x00\x00\x00xxx.'
+        self.assertEqual(self.loads(dumped), bytearray(b'xxx'))
+
     @requires_32b
     def test_large_32b_binbytes8(self):
         dumped = b'\x80\x04\x8e\4\0\0\0\1\0\0\0\xe2\x82\xac\x00.'
+        self.check_unpickling_error((pickle.UnpicklingError, OverflowError),
+                                    dumped)
+
+    @requires_32b
+    def test_large_32b_bytearray8(self):
+        dumped = b'\x80\x05\x96\4\0\0\0\1\0\0\0\xe2\x82\xac\x00.'
         self.check_unpickling_error((pickle.UnpicklingError, OverflowError),
                                     dumped)
 
@@ -1166,6 +1193,10 @@ class AbstractUnpickleTests(unittest.TestCase):
             b'\x8e\x03\x00\x00\x00\x00\x00\x00',
             b'\x8e\x03\x00\x00\x00\x00\x00\x00\x00',
             b'\x8e\x03\x00\x00\x00\x00\x00\x00\x00ab',
+            b'\x96',                    # BYTEARRAY8
+            b'\x96\x03\x00\x00\x00\x00\x00\x00',
+            b'\x96\x03\x00\x00\x00\x00\x00\x00\x00',
+            b'\x96\x03\x00\x00\x00\x00\x00\x00\x00ab',
             b'\x95',                    # FRAME
             b'\x95\x02\x00\x00\x00\x00\x00\x00',
             b'\x95\x02\x00\x00\x00\x00\x00\x00\x00',
@@ -1415,6 +1446,25 @@ class AbstractPickleTests(unittest.TestCase):
             for s in [bytes([i, i]) for i in range(256)]:
                 p = self.dumps(s, proto)
                 self.assert_is_copy(s, self.loads(p))
+
+    def test_bytearray(self):
+        for proto in protocols:
+            for s in b'', b'xyz', b'xyz'*100:
+                b = bytearray(s)
+                p = self.dumps(b, proto)
+                bb = self.loads(p)
+                self.assertIsNot(bb, b)
+                self.assert_is_copy(b, bb)
+                if proto <= 3:
+                    # bytearray is serialized using a global reference
+                    self.assertIn(b'bytearray', p)
+                    self.assertTrue(opcode_in_pickle(pickle.GLOBAL, p))
+                elif proto == 4:
+                    self.assertIn(b'bytearray', p)
+                    self.assertTrue(opcode_in_pickle(pickle.STACK_GLOBAL, p))
+                elif proto == 5:
+                    self.assertNotIn(b'bytearray', p)
+                    self.assertTrue(opcode_in_pickle(pickle.BYTEARRAY8, p))
 
     def test_ints(self):
         for proto in protocols:
@@ -2049,7 +2099,8 @@ class AbstractPickleTests(unittest.TestCase):
         the following consistency check.
         """
         frame_end = frameless_start = None
-        frameless_opcodes = {'BINBYTES', 'BINUNICODE', 'BINBYTES8', 'BINUNICODE8'}
+        frameless_opcodes = {'BINBYTES', 'BINUNICODE', 'BINBYTES8',
+                             'BINUNICODE8', 'BYTEARRAY8'}
         for op, arg, pos in pickletools.genops(pickled):
             if frame_end is not None:
                 self.assertLessEqual(pos, frame_end)
@@ -2160,19 +2211,20 @@ class AbstractPickleTests(unittest.TestCase):
         num_frames = 20
         # Large byte objects (dict values) intermitted with small objects
         # (dict keys)
-        obj = {i: bytes([i]) * frame_size for i in range(num_frames)}
+        for bytes_type in (bytes, bytearray):
+            obj = {i: bytes_type([i]) * frame_size for i in range(num_frames)}
 
-        for proto in range(4, pickle.HIGHEST_PROTOCOL + 1):
-            pickled = self.dumps(obj, proto)
+            for proto in range(4, pickle.HIGHEST_PROTOCOL + 1):
+                pickled = self.dumps(obj, proto)
 
-            frameless_pickle = remove_frames(pickled)
-            self.assertEqual(count_opcode(pickle.FRAME, frameless_pickle), 0)
-            self.assertEqual(obj, self.loads(frameless_pickle))
+                frameless_pickle = remove_frames(pickled)
+                self.assertEqual(count_opcode(pickle.FRAME, frameless_pickle), 0)
+                self.assertEqual(obj, self.loads(frameless_pickle))
 
-            some_frames_pickle = remove_frames(pickled, lambda i: i % 2)
-            self.assertLess(count_opcode(pickle.FRAME, some_frames_pickle),
-                            count_opcode(pickle.FRAME, pickled))
-            self.assertEqual(obj, self.loads(some_frames_pickle))
+                some_frames_pickle = remove_frames(pickled, lambda i: i % 2)
+                self.assertLess(count_opcode(pickle.FRAME, some_frames_pickle),
+                                count_opcode(pickle.FRAME, pickled))
+                self.assertEqual(obj, self.loads(some_frames_pickle))
 
     def test_framed_write_sizes_with_delayed_writer(self):
         class ChunkAccumulator:
@@ -2671,7 +2723,7 @@ class AbstractPickleModuleTests(unittest.TestCase):
 
     def test_highest_protocol(self):
         # Of course this needs to be changed when HIGHEST_PROTOCOL changes.
-        self.assertEqual(pickle.HIGHEST_PROTOCOL, 4)
+        self.assertEqual(pickle.HIGHEST_PROTOCOL, 5)
 
     def test_callapi(self):
         f = io.BytesIO()
@@ -2917,6 +2969,22 @@ class AbstractPicklerUnpicklerObjectTests(unittest.TestCase):
                 f.seek(0)
                 unpickler = self.unpickler_class(f)
                 self.assertEqual(unpickler.load(), data)
+
+    def test_unpickling_trivial_io(self):
+        # Check unpickling with an io class that doesn't have readinto()
+        sizes = [1, 16, 1000, 2**10]
+        data = [(b"x" * size, bytearray(b"x") * size) for size in sizes]
+        for proto in protocols:
+            with self.subTest(proto=proto):
+                bio = io.BytesIO()
+                pickler = self.pickler_class(bio, protocol=proto)
+                pickler.dump(data)
+                N = 5
+                f = TrivialReadableIO(bio.getvalue() * N)
+                unpickler = self.unpickler_class(f)
+                for i in range(N):
+                    self.assertEqual(unpickler.load(), data)
+                self.assertRaises(EOFError, unpickler.load)
 
 
 # Tests for dispatch_table attribute
