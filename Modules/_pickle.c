@@ -1194,6 +1194,7 @@ bad_readline(void)
     return -1;
 }
 
+/* Skip any consumed data that was only prefetched using peek() */
 static int
 _Unpickler_SkipConsumed(UnpicklerObject *self)
 {
@@ -1301,6 +1302,7 @@ _Unpickler_ReadImpl(UnpicklerObject *self, char **s, Py_ssize_t n)
     if (!self->read)
         return bad_readline();
 
+    /* Extend the buffer to satisfy desired size */
     num_read = _Unpickler_ReadFromFile(self, n);
     if (num_read < 0)
         return -1;
@@ -1324,11 +1326,20 @@ _Unpickler_ReadInto(UnpicklerObject *self, char *buf, Py_ssize_t n)
 {
     assert(n != READ_WHOLE_LINE);
 
-    /* Try to satisfy read from buffer */
-    if (n <= self->input_len - self->next_read_idx) {
-        memcpy(buf, self->input_buffer + self->next_read_idx, n);
-        self->next_read_idx += n;
-        return n;
+    /* XXX add tests from ogrisel's use case */
+
+    /* Read from available buffer data, if any */
+    Py_ssize_t in_buffer = self->input_len - self->next_read_idx;
+    if (in_buffer > 0) {
+        Py_ssize_t to_read = Py_MIN(in_buffer, n);
+        memcpy(buf, self->input_buffer + self->next_read_idx, to_read);
+        self->next_read_idx += to_read;
+        buf += to_read;
+        n -= to_read;
+        if (n == 0) {
+            /* Entire read was satisfied from buffer */
+            return n;
+        }
     }
 
     /* Read from file */
