@@ -206,6 +206,7 @@ class FontSizer:
         font['size'] = new_size
         if self.callback:
             self.callback(new_size)
+        return 'break'
 
 
 class HelpText(Text):
