@@ -5287,9 +5287,10 @@ os.posix_spawn
         Tuple or list of strings.
     env: object
         Dictionary of strings mapping to strings.
-    file_actions: object = None
-        A sequence of file action tuples.
     /
+    *
+    file_actions: object(c_default='NULL') = ()
+        A sequence of file action tuples.
 
 Execute the program specified by path in a new process.
 [clinic start generated code]*/
@@ -5297,7 +5298,7 @@ Execute the program specified by path in a new process.
 static PyObject *
 os_posix_spawn_impl(PyObject *module, path_t *path, PyObject *argv,
                     PyObject *env, PyObject *file_actions)
-/*[clinic end generated code: output=d023521f541c709c input=a3db1021d33230dc]*/
+/*[clinic end generated code: output=d023521f541c709c input=cca8767aa3c4153a]*/
 {
     EXECV_CHAR **argvlist = NULL;
     EXECV_CHAR **envlist = NULL;
@@ -5344,7 +5345,7 @@ os_posix_spawn_impl(PyObject *module, path_t *path, PyObject *argv,
         goto exit;
     }
 
-    if (file_actions != Py_None) {
+    if (file_actions != NULL) {
         if (parse_file_actions(file_actions, &file_actions_buf)) {
             goto exit;
         }

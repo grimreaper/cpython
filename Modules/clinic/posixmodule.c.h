@@ -1730,7 +1730,7 @@ exit:
 #if defined(HAVE_POSIX_SPAWN)
 
 PyDoc_STRVAR(os_posix_spawn__doc__,
-"posix_spawn($module, path, argv, env, file_actions=None, /)\n"
+"posix_spawn($module, path, argv, env, /, *, file_actions=())\n"
 "--\n"
 "\n"
 "Execute the program specified by path in a new process.\n"
@@ -1745,22 +1745,24 @@ PyDoc_STRVAR(os_posix_spawn__doc__,
 "    A sequence of file action tuples.");
 
 #define OS_POSIX_SPAWN_METHODDEF    \
-    {"posix_spawn", (PyCFunction)os_posix_spawn, METH_FASTCALL, os_posix_spawn__doc__},
+    {"posix_spawn", (PyCFunction)os_posix_spawn, METH_FASTCALL|METH_KEYWORDS, os_posix_spawn__doc__},
 
 static PyObject *
 os_posix_spawn_impl(PyObject *module, path_t *path, PyObject *argv,
                     PyObject *env, PyObject *file_actions);
 
 static PyObject *
-os_posix_spawn(PyObject *module, PyObject *const *args, Py_ssize_t nargs)
+os_posix_spawn(PyObject *module, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames)
 {
     PyObject *return_value = NULL;
+    static const char * const _keywords[] = {"", "", "", "file_actions", NULL};
+    static _PyArg_Parser _parser = {"O&OO|$O:posix_spawn", _keywords, 0};
     path_t path = PATH_T_INITIALIZE("posix_spawn", "path", 0, 0);
     PyObject *argv;
     PyObject *env;
-    PyObject *file_actions = Py_None;
+    PyObject *file_actions = NULL;
 
-    if (!_PyArg_ParseStack(args, nargs, "O&OO|O:posix_spawn",
+    if (!_PyArg_ParseStackAndKeywords(args, nargs, kwnames, &_parser,
         path_converter, &path, &argv, &env, &file_actions)) {
         goto exit;
     }
@@ -6589,4 +6591,4 @@ exit:
 #ifndef OS_GETRANDOM_METHODDEF
     #define OS_GETRANDOM_METHODDEF
 #endif /* !defined(OS_GETRANDOM_METHODDEF) */
-/*[clinic end generated code: output=8d3d9dddf254c3c2 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=a387ceb73f1f6dfc input=a9049054013a1b77]*/
