@@ -3191,7 +3191,7 @@ expat_start_doctype_handler(XMLParserObject *self,
             !(PyCFunction_Check(parser_doctype) &&
               PyCFunction_GET_SELF(parser_doctype) == self_pyobj &&
               PyCFunction_GET_FUNCTION(parser_doctype) ==
-                    (PyCFunction) _elementtree_XMLParser_doctype)) {
+                    (void *) _elementtree_XMLParser_doctype)) {
             res = _elementtree_XMLParser_doctype_impl(self, doctype_name_obj,
                                                       pubid_obj, sysid_obj);
             if (!res)
@@ -3973,7 +3973,7 @@ static PyTypeObject XMLParser_Type = {
 /* python module interface */
 
 static PyMethodDef _functions[] = {
-    {"SubElement", (PyCFunction) subelement, METH_VARARGS | METH_KEYWORDS},
+    {"SubElement", (PyCFunction)(void *) subelement, METH_VARARGS | METH_KEYWORDS},
     {NULL, NULL}
 };
 

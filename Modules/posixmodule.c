@@ -12900,12 +12900,12 @@ static PyMethodDef posix_methods[] = {
     OS_SETPRIORITY_METHODDEF
     OS_POSIX_SPAWN_METHODDEF
 #ifdef HAVE_READLINK
-    {"readlink",        (PyCFunction)posix_readlink,
+    {"readlink",        (PyCFunction)(void *)posix_readlink,
                         METH_VARARGS | METH_KEYWORDS,
                         readlink__doc__},
 #endif /* HAVE_READLINK */
 #if !defined(HAVE_READLINK) && defined(MS_WINDOWS)
-    {"readlink",        (PyCFunction)win_readlink,
+    {"readlink",        (PyCFunction)(void *)win_readlink,
                         METH_VARARGS | METH_KEYWORDS,
                         readlink__doc__},
 #endif /* !defined(HAVE_READLINK) && defined(MS_WINDOWS) */
@@ -12997,7 +12997,7 @@ static PyMethodDef posix_methods[] = {
     OS_PWRITE_METHODDEF
     OS_PWRITEV_METHODDEF
 #ifdef HAVE_SENDFILE
-    {"sendfile",        (PyCFunction)posix_sendfile, METH_VARARGS | METH_KEYWORDS,
+    {"sendfile",        (PyCFunction)(void *)posix_sendfile, METH_VARARGS | METH_KEYWORDS,
                             posix_sendfile__doc__},
 #endif
     OS_FSTAT_METHODDEF

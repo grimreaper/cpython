@@ -2146,7 +2146,7 @@ bytearray_methods[] = {
     BYTEARRAY_DECODE_METHODDEF
     {"endswith", (PyCFunction)bytearray_endswith, METH_VARARGS,
      _Py_endswith__doc__},
-    {"expandtabs", (PyCFunction)stringlib_expandtabs, METH_VARARGS | METH_KEYWORDS,
+    {"expandtabs", (PyCFunction)(void *)stringlib_expandtabs, METH_VARARGS | METH_KEYWORDS,
      _Py_expandtabs__doc__},
     BYTEARRAY_EXTEND_METHODDEF
     {"find", (PyCFunction)bytearray_find, METH_VARARGS,

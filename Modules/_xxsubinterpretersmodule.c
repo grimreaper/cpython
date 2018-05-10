@@ -2572,9 +2572,9 @@ static PyMethodDef module_functions[] = {
      METH_VARARGS, channel_recv_doc},
     {"channel_close",             (PyCFunction)channel_close,
      METH_VARARGS, channel_close_doc},
-    {"channel_drop_interpreter",  (PyCFunction)channel_drop_interpreter,
+    {"channel_drop_interpreter",  (PyCFunction)(void *)channel_drop_interpreter,
      METH_VARARGS | METH_KEYWORDS, channel_drop_interpreter_doc},
-    {"_channel_id",               (PyCFunction)channel__channel_id,
+    {"_channel_id",               (PyCFunction)(void *)channel__channel_id,
      METH_VARARGS | METH_KEYWORDS, NULL},
 
     {NULL,                        NULL}           /* sentinel */
