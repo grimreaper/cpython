@@ -1266,7 +1266,7 @@ else
 fi],
 [AC_MSG_RESULT(no)])
 if test "$Py_LTO" = 'true' ; then
-  case $CC in
+  case ${CC##*/} in
     *clang*)
       case $ac_sys_system in
         Darwin*)
@@ -1347,7 +1347,7 @@ then
   fi
 fi
 LLVM_PROF_ERR=no
-case $CC in
+case ${CC##*/} in
   *clang*)
     # Any changes made here should be reflected in the GCC+Darwin case below
     PGO_PROF_GEN_FLAG="-fprofile-instr-generate"
@@ -1421,7 +1421,7 @@ then
            WRAP="-fwrapv"
         fi
 
-        case $CC in
+        case ${CC##*/} in
             *clang*)
                 cc_is_clang=1
                 ;;
@@ -1540,7 +1540,7 @@ yes)
 
     # ICC doesn't recognize the option, but only emits a warning
     ## XXX does it emit an unused result warning and can it be disabled?
-    case "$CC" in
+    case "${CC##*/}" in
     *icc*)
     ac_cv_disable_unused_result_warning=no
     ;;
@@ -1861,7 +1861,7 @@ yes)
 esac
 
 # ICC needs -fp-model strict or floats behave badly
-case "$CC" in
+case "${CC##*/}" in
 *icc*)
     CFLAGS_NODIST="$CFLAGS_NODIST -fp-model strict"
     ;;
@@ -2471,7 +2471,7 @@ then
 		then
 			LINKFORSHARED="-Wl,--export-dynamic"
 		fi;;
-	SunOS/5*) case $CC in
+	SunOS/5*) case ${CC##*/} in
 		  *gcc*)
 		    if $CC -Xlinker --help 2>&1 | grep export-dynamic >/dev/null
 		    then
@@ -5066,7 +5066,7 @@ if test "$have_gcc_asm_for_x87" = yes; then
     # Some versions of gcc miscompile inline asm:
     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=46491
     # http://gcc.gnu.org/ml/gcc/2010-11/msg00366.html
-    case $CC in
+    case ${CC##*/} in
         *gcc*)
             AC_MSG_CHECKING(for gcc ipa-pure-const bug)
             saved_cflags="$CFLAGS"
