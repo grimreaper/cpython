@@ -99,7 +99,7 @@ PyDoc_STRVAR(_sha3_shake_128_digest__doc__,
 "Return the digest value as a string of binary data.");
 
 #define _SHA3_SHAKE_128_DIGEST_METHODDEF    \
-    {"digest", (PyCFunction)_sha3_shake_128_digest, METH_FASTCALL|METH_KEYWORDS, _sha3_shake_128_digest__doc__},
+    {"digest", (PyCFunction)(void *)_sha3_shake_128_digest, METH_FASTCALL|METH_KEYWORDS, _sha3_shake_128_digest__doc__},
 
 static PyObject *
 _sha3_shake_128_digest_impl(SHA3object *self, unsigned long length);
@@ -129,7 +129,7 @@ PyDoc_STRVAR(_sha3_shake_128_hexdigest__doc__,
 "Return the digest value as a string of hexadecimal digits.");
 
 #define _SHA3_SHAKE_128_HEXDIGEST_METHODDEF    \
-    {"hexdigest", (PyCFunction)_sha3_shake_128_hexdigest, METH_FASTCALL|METH_KEYWORDS, _sha3_shake_128_hexdigest__doc__},
+    {"hexdigest", (PyCFunction)(void *)_sha3_shake_128_hexdigest, METH_FASTCALL|METH_KEYWORDS, _sha3_shake_128_hexdigest__doc__},
 
 static PyObject *
 _sha3_shake_128_hexdigest_impl(SHA3object *self, unsigned long length);
@@ -151,4 +151,4 @@ _sha3_shake_128_hexdigest(SHA3object *self, PyObject *const *args, Py_ssize_t na
 exit:
     return return_value;
 }
-/*[clinic end generated code: output=a3aeb6c3b2fbd905 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=d88624206020b619 input=a9049054013a1b77]*/

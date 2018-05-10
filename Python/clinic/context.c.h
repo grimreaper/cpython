@@ -8,7 +8,7 @@ PyDoc_STRVAR(_contextvars_Context_get__doc__,
 "\n");
 
 #define _CONTEXTVARS_CONTEXT_GET_METHODDEF    \
-    {"get", (PyCFunction)_contextvars_Context_get, METH_FASTCALL, _contextvars_Context_get__doc__},
+    {"get", (PyCFunction)(void *)_contextvars_Context_get, METH_FASTCALL, _contextvars_Context_get__doc__},
 
 static PyObject *
 _contextvars_Context_get_impl(PyContext *self, PyObject *key,
@@ -106,7 +106,7 @@ PyDoc_STRVAR(_contextvars_ContextVar_get__doc__,
 "\n");
 
 #define _CONTEXTVARS_CONTEXTVAR_GET_METHODDEF    \
-    {"get", (PyCFunction)_contextvars_ContextVar_get, METH_FASTCALL, _contextvars_ContextVar_get__doc__},
+    {"get", (PyCFunction)(void *)_contextvars_ContextVar_get, METH_FASTCALL, _contextvars_ContextVar_get__doc__},
 
 static PyObject *
 _contextvars_ContextVar_get_impl(PyContextVar *self, PyObject *default_value);
@@ -143,4 +143,4 @@ PyDoc_STRVAR(_contextvars_ContextVar_reset__doc__,
 
 #define _CONTEXTVARS_CONTEXTVAR_RESET_METHODDEF    \
     {"reset", (PyCFunction)_contextvars_ContextVar_reset, METH_O, _contextvars_ContextVar_reset__doc__},
-/*[clinic end generated code: output=d9a675e3a52a14fc input=a9049054013a1b77]*/
+/*[clinic end generated code: output=4864a70db88d482e input=a9049054013a1b77]*/
