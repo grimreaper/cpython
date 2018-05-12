@@ -16,12 +16,8 @@ typedef uint16_t ucs2_t, DBCHAR;
 typedef unsigned short ucs2_t, DBCHAR;
 #endif
 
-typedef union {
-    void *p;
-    int i;
+typedef struct {
     unsigned char c[8];
-    ucs2_t u2[4];
-    Py_UCS4 u4[2];
 } MultibyteCodec_State;
 
 typedef int (*mbcodec_init)(const void *config);
