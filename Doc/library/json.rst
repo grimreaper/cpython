@@ -275,7 +275,7 @@ Basic Usage
    :exc:`JSONDecodeError` will be raised.
 
    .. deprecated:: 3.1
-      The `encoding` keyword argument has been deprecated and will be ignored.
+      The *encoding* keyword argument has been deprecated and will be ignored.
 
    .. versionchanged:: 3.6
       *s* can now be of type :class:`bytes` or :class:`bytearray`. The
