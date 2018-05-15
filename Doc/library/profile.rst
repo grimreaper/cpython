@@ -132,7 +132,7 @@ the output by. This only applies when ``-o`` is not supplied.
 
 ``-m`` specifies that a module is being profiled instead of a script.
 
-   .. versionadded:: 3.7
+   .. versionadded:: 3.8
       Added the ``-m`` option.
 
 The :mod:`pstats` module's :class:`~pstats.Stats` class has a variety of methods
