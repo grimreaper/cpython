@@ -7366,9 +7366,6 @@ $as_echo_n "checking whether pthreads are available without options... " >&6; }
 if ${ac_cv_pthread_is_default+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test "$cross_compiling" = yes; then :
-  ac_cv_pthread_is_default=no
-else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -7386,7 +7383,7 @@ int main(){
 }
 
 _ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
+if ac_fn_c_try_link "$LINENO"; then :
 
   ac_cv_pthread_is_default=yes
   ac_cv_kthread=no
@@ -7395,10 +7392,8 @@ if ac_fn_c_try_run "$LINENO"; then :
 else
   ac_cv_pthread_is_default=no
 fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
 
 fi
 
@@ -7413,7 +7408,7 @@ else
 # -Kpthread, if available, provides the right #defines
 # and linker options to make pthread_create available
 # Some compilers won't report that they do not support -Kpthread,
-# so we need to run a program to see whether it really made the
+# so we need to link a program to see whether it really made the
 # function available.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC accepts -Kpthread" >&5
 $as_echo_n "checking whether $CC accepts -Kpthread... " >&6; }
@@ -7422,10 +7417,7 @@ if ${ac_cv_kpthread+:} false; then :
 else
   ac_save_cc="$CC"
 CC="$CC -Kpthread"
-if test "$cross_compiling" = yes; then :
-  ac_cv_kpthread=no
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 #include <stdio.h>
@@ -7442,15 +7434,13 @@ int main(){
 }
 
 _ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
+if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_kpthread=yes
 else
   ac_cv_kpthread=no
 fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
 CC="$ac_save_cc"
 fi
 
@@ -7463,7 +7453,7 @@ then
 # -Kthread, if available, provides the right #defines
 # and linker options to make pthread_create available
 # Some compilers won't report that they do not support -Kthread,
-# so we need to run a program to see whether it really made the
+# so we need to link a program to see whether it really made the
 # function available.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC accepts -Kthread" >&5
 $as_echo_n "checking whether $CC accepts -Kthread... " >&6; }
@@ -7472,10 +7462,7 @@ if ${ac_cv_kthread+:} false; then :
 else
   ac_save_cc="$CC"
 CC="$CC -Kthread"
-if test "$cross_compiling" = yes; then :
-  ac_cv_kthread=no
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 #include <stdio.h>
@@ -7492,15 +7479,13 @@ int main(){
 }
 
 _ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
+if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_kthread=yes
 else
   ac_cv_kthread=no
 fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
 CC="$ac_save_cc"
 fi
 
@@ -7513,7 +7498,7 @@ then
 # -pthread, if available, provides the right #defines
 # and linker options to make pthread_create available
 # Some compilers won't report that they do not support -pthread,
-# so we need to run a program to see whether it really made the
+# so we need to link a program to see whether it really made the
 # function available.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether $CC accepts -pthread" >&5
 $as_echo_n "checking whether $CC accepts -pthread... " >&6; }
@@ -7522,10 +7507,7 @@ if ${ac_cv_pthread+:} false; then :
 else
   ac_save_cc="$CC"
 CC="$CC -pthread"
-if test "$cross_compiling" = yes; then :
-  ac_cv_pthread=no
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 #include <stdio.h>
@@ -7542,15 +7524,13 @@ int main(){
 }
 
 _ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
+if ac_fn_c_try_link "$LINENO"; then :
   ac_cv_pthread=yes
 else
   ac_cv_pthread=no
 fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
 CC="$ac_save_cc"
 fi
 
