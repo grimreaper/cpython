@@ -3206,7 +3206,6 @@ AC_FUNC_SETPGRP
 AC_FUNC_LSTAT
 
 
-
 AC_CHECK_FUNCS(alarm accept4 setitimer getitimer bind_textdomain_codeset \
  clock confstr ctermid dup3 execv faccessat fchmod fchmodat fchown fchownat \
  fexecve fdopendir fork fpathconf fstatat ftime ftruncate futimesat \
