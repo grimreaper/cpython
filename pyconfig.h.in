@@ -941,9 +941,6 @@
 /* Define to 1 if you have the <spawn.h> header file. */
 #undef HAVE_SPAWN_H
 
-/* Define if your compiler provides ssize_t */
-#undef HAVE_SSIZE_T
-
 /* Define to 1 if you have the `statvfs' function. */
 #undef HAVE_STATVFS
 
@@ -1575,6 +1572,9 @@
 
 /* Define to `int' if <sys/socket.h> does not define. */
 #undef socklen_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef ssize_t
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef uid_t
