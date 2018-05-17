@@ -620,6 +620,7 @@ then
 	fi
 fi
 AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_GREP
 AC_PROG_SED
@@ -1483,7 +1484,7 @@ AC_SUBST(UNIVERSAL_ARCH_FLAGS)
 # tweak BASECFLAGS based on compiler and platform
 case $GCC in
 yes)
-    CFLAGS_NODIST="$CFLAGS_NODIST -std=c99"
+    CFLAGS_NODIST="$CFLAGS_NODIST"
 
     AC_MSG_CHECKING(for -Wextra)
      ac_save_cc="$CC"
@@ -1930,12 +1931,7 @@ sys/endian.h sys/sysmacros.h)
 AC_HEADER_DIRENT
 AC_HEADER_MAJOR
 
-# bluetooth/bluetooth.h has been known to not compile with -std=c99.
-# http://permalink.gmane.org/gmane.linux.bluez.kernel/22294
-SAVE_CFLAGS=$CFLAGS
-CFLAGS="-std=c99 $CFLAGS"
 AC_CHECK_HEADERS(bluetooth/bluetooth.h)
-CFLAGS=$SAVE_CFLAGS
 
 # On Darwin (OS X) net/if.h requires sys/socket.h to be imported first.
 AC_CHECK_HEADERS([net/if.h], [], [],
