@@ -1510,16 +1510,14 @@ yes)
     # -fno-strict-aliasing on versions of GCC that support but produce
     # warnings.  See Issue3326
     AC_MSG_CHECKING(whether $CC accepts and needs -fno-strict-aliasing)
-     ac_save_cc="$CC"
-     CC="$CC -fno-strict-aliasing"
      save_CFLAGS="$CFLAGS"
+     CFLAGS="$CFLAGS -fno-strict-aliasing"
      AC_CACHE_VAL(ac_cv_no_strict_aliasing,
        AC_COMPILE_IFELSE(
          [
 	   AC_LANG_PROGRAM([[]], [[]])
 	 ],[
-	   CC="$ac_save_cc -fstrict-aliasing"
-           CFLAGS="$CFLAGS -Werror -Wstrict-aliasing"
+           CFLAGS="$CFLAGS -fstrict-aliasing -Werror -Wstrict-aliasing"
            AC_COMPILE_IFELSE(
 	     [
 	       AC_LANG_PROGRAM([[void f(int **x) {}]],
@@ -1533,7 +1531,6 @@ yes)
 	   ac_cv_no_strict_aliasing=no
 	 ]))
      CFLAGS="$save_CFLAGS"
-     CC="$ac_save_cc"
     AC_MSG_RESULT($ac_cv_no_strict_aliasing)
     if test $ac_cv_no_strict_aliasing = yes
     then
