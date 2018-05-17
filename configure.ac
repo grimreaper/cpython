@@ -896,14 +896,6 @@ else
 fi
 rm -f conftest.c conftest.out
 
-# Check for unsupported systems
-case $ac_sys_system/$ac_sys_release in
-atheos*|Linux*/1*)
-   echo This system \($ac_sys_system/$ac_sys_release\) is no longer supported.
-   echo See README for details.
-   exit 1;;
-esac
-
 AC_EXEEXT
 AC_MSG_CHECKING(for --with-suffix)
 AC_ARG_WITH(suffix,
