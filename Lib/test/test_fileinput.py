@@ -87,35 +87,29 @@ class LineReader:
 class BufferSizesTests(unittest.TestCase):
     def test_buffer_sizes(self):
         # First, run the tests with default and teeny buffer size.
-        bs = None
-        t1 = t2 = t3 = t4 = t5 = t6 = None
+        from fileinput import _sentinel
+        for round, bs in (0, 0), (1, 30), (2, _sentinel):
+            t1 = t2 = t3 = t4 = None
+            try:
+                t1 = writeTmp(1, ["Line %s of file 1\n" % (i+1) for i in range(15)])
+                t2 = writeTmp(2, ["Line %s of file 2\n" % (i+1) for i in range(10)])
+                t3 = writeTmp(3, ["Line %s of file 3\n" % (i+1) for i in range(5)])
+                t4 = writeTmp(4, ["Line %s of file 4\n" % (i+1) for i in range(1)])
+                if bs is not _sentinel:
+                    with self.assertWarns(DeprecationWarning):
+                        self.buffer_size_test(t1, t2, t3, t4, bs, round)
+                else:
+                    self.buffer_size_test(t1, t2, t3, t4, bs, round)
+            finally:
+                remove_tempfiles(t1, t2, t3, t4)
 
-
-        try:
-            t1 = writeTmp(1, ["Line %s of file 1\n" % (i+1) for i in range(15)])
-            t2 = writeTmp(2, ["Line %s of file 2\n" % (i+1) for i in range(10)])
-            t3 = writeTmp(3, ["Line %s of file 3\n" % (i+1) for i in range(5)])
-            t4 = writeTmp(4, ["Line %s of file 4\n" % (i+1) for i in range(1)])
-            self.buffer_size_test(t1, t2, t3, t4)
-        finally:
-            remove_tempfiles(t1, t2, t3, t4)
-
-        try:
-            t5 = writeTmp(5, ["Line %s of file 5\n" % (i+1) for i in range(15)])
-            t6 = writeTmp(6, ["Line %s of file 6\n" % (i+1) for i in range(10)])
-            for (bs,t) in ((0,1), (t1,t2)):
-                with self.assertWarns(DeprecationWarning):
-                    FileInput(files=(t,), bufsize=bs)
-        finally:
-            remove_tempfiles(t5, t6)
-
-    def buffer_size_test(self, t1, t2, t3, t4):
+    def buffer_size_test(self, t1, t2, t3, t4, bs=0, round=0):
         pat = re.compile(r'LINE (\d+) OF FILE (\d+)')
 
-        start = 1 
+        start = 1 + round*6
         if verbose:
-            print('%s. Simple iteration' % (start+0))
-        fi = FileInput(files=(t1, t2, t3, t4))
+            print('%s. Simple iteration (bs=%s)' % (start+0, bs))
+        fi = FileInput(files=(t1, t2, t3, t4), bufsize=bs)
         lines = list(fi)
         fi.close()
         self.assertEqual(len(lines), 31)
@@ -125,8 +119,8 @@ class BufferSizesTests(unittest.TestCase):
         self.assertEqual(fi.filename(), t4)
 
         if verbose:
-            print('%s. Status variables' % (start+1))
-        fi = FileInput(files=(t1, t2, t3, t4))
+            print('%s. Status variables (bs=%s)' % (start+1, bs))
+        fi = FileInput(files=(t1, t2, t3, t4), bufsize=bs)
         s = "x"
         while s and s != 'Line 6 of file 2\n':
             s = fi.readline()
@@ -137,15 +131,15 @@ class BufferSizesTests(unittest.TestCase):
         self.assertFalse(fi.isstdin())
 
         if verbose:
-            print('%s. Nextfile' % (start+2))
+            print('%s. Nextfile (bs=%s)' % (start+2, bs))
         fi.nextfile()
         self.assertEqual(fi.readline(), 'Line 1 of file 3\n')
         self.assertEqual(fi.lineno(), 22)
         fi.close()
 
         if verbose:
-            print('%s. Stdin' % (start+3))
-        fi = FileInput(files=(t1, t2, t3, t4, '-'))
+            print('%s. Stdin (bs=%s)' % (start+3, bs))
+        fi = FileInput(files=(t1, t2, t3, t4, '-'), bufsize=bs)
         savestdin = sys.stdin
         try:
             sys.stdin = StringIO("Line 1 of stdin\nLine 2 of stdin\n")
@@ -158,8 +152,8 @@ class BufferSizesTests(unittest.TestCase):
             sys.stdin = savestdin
 
         if verbose:
-            print('%s. Boundary conditions' % (start+4))
-        fi = FileInput(files=(t1, t2, t3, t4))
+            print('%s. Boundary conditions (bs=%s)' % (start+4, bs))
+        fi = FileInput(files=(t1, t2, t3, t4), bufsize=bs)
         self.assertEqual(fi.lineno(), 0)
         self.assertEqual(fi.filename(), None)
         fi.nextfile()
@@ -167,10 +161,10 @@ class BufferSizesTests(unittest.TestCase):
         self.assertEqual(fi.filename(), None)
 
         if verbose:
-            print('%s. Inplace' % (start+5))
+            print('%s. Inplace (bs=%s)' % (start+5, bs))
         savestdout = sys.stdout
         try:
-            fi = FileInput(files=(t1, t2, t3, t4), inplace=1)
+            fi = FileInput(files=(t1, t2, t3, t4), inplace=1, bufsize=bs)
             for line in fi:
                 line = line[:-1].upper()
                 print(line)
@@ -178,7 +172,7 @@ class BufferSizesTests(unittest.TestCase):
         finally:
             sys.stdout = savestdout
 
-        fi = FileInput(files=(t1, t2, t3, t4))
+        fi = FileInput(files=(t1, t2, t3, t4), bufsize=bs)
         for line in fi:
             self.assertEqual(line[-1], '\n')
             m = pat.match(line[:-1])
@@ -565,25 +559,20 @@ class FileInputTests(unittest.TestCase):
             remove_tempfiles(t1)
 
 
-_sentinel = object()
 class MockFileInput:
     """A class that mocks out fileinput.FileInput for use during unit tests"""
 
-    def __init__(self, files=None, inplace=False, backup="", bufsize=_sentinel,
+    def __init__(self, files=None, inplace=False, backup="", bufsize=0,
                  mode="r", openhook=None):
         self.files = files
         self.inplace = inplace
         self.backup = backup
+        self.bufsize = bufsize
         self.mode = mode
         self.openhook = openhook
         self._file = None
         self.invocation_counts = collections.defaultdict(lambda: 0)
         self.return_values = {}
-
-        if bufsize is not _sentinel:
-            from warnings import warn
-            warn('Bufsize is deprecated since 3.6, will be removed in 3.8',
-                         DeprecationWarning, stacklevel=2)
 
     def close(self):
         self.invocation_counts["close"] += 1
@@ -673,12 +662,6 @@ class Test_fileinput_input(BaseFileInputGlobalMethodsTest):
         fileinput._state = None
         self.do_test_call_input()
 
-
-    def test_input_bufsize_deprecated(self):
-        with self.assertWarns(DeprecationWarning):
-            fileinput.input(bufsize=0)
-
-    
     def do_test_call_input(self):
         """Tests that fileinput.input() creates a new fileinput.FileInput
            object, passing the given parameters unmodified to
@@ -687,12 +670,15 @@ class Test_fileinput_input(BaseFileInputGlobalMethodsTest):
         files = object()
         inplace = object()
         backup = object()
+        bufsize = object()
         mode = object()
         openhook = object()
 
         # call fileinput.input() with different values for each argument
-        result = fileinput.input(files=files, inplace=inplace, backup=backup,
-            mode=mode, openhook=openhook)
+        with self.assertWarns(DeprecationWarning):
+            result = fileinput.input(files=files, inplace=inplace, backup=backup,
+                                    bufsize=bufsize,
+                mode=mode, openhook=openhook)
 
         # ensure fileinput._state was set to the returned object
         self.assertIs(result, fileinput._state, "fileinput._state")
@@ -704,6 +690,10 @@ class Test_fileinput_input(BaseFileInputGlobalMethodsTest):
         self.assertIs(backup, result.backup, "backup")
         self.assertIs(mode, result.mode, "mode")
         self.assertIs(openhook, result.openhook, "openhook")
+
+        # FileInput(bufsize=..) is deprecated, check that fileinut.input will
+        # _not_ its value to the MockFileInput
+        self.assertIsNot(bufsize, result.bufsize, "bufsize")
 
 class Test_fileinput_close(BaseFileInputGlobalMethodsTest):
     """Unit tests for fileinput.close()"""
