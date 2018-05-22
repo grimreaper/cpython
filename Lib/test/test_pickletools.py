@@ -86,8 +86,9 @@ class MiscTestCase(unittest.TestCase):
                      'pyint', 'pylong', 'pyinteger_or_bool', 'pybool', 'pyfloat',
                      'pybytes_or_str', 'pystring', 'pybytes', 'pybytearray',
                      'pyunicode', 'pynone', 'pytuple', 'pylist', 'pydict',
-                     'pyset', 'pyfrozenset', 'anyobject', 'markobject',
-                     'stackslice', 'OpcodeInfo', 'opcodes', 'code2op',
+                     'pyset', 'pyfrozenset', 'pybuffer', 'anyobject',
+                     'markobject', 'stackslice', 'OpcodeInfo', 'opcodes',
+                     'code2op',
                      }
         support.check__all__(self, pickletools, blacklist=blacklist)
 

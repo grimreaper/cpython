@@ -162,8 +162,6 @@ static PyMethodDef picklebuf_methods[] = {
     {NULL,      NULL}
 };
 
-/* XXX release() method and PyPickleBuffer_Release()? */
-
 PyTypeObject PyPickleBuffer_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     .tp_name = "pickle.PickleBuffer",

@@ -1045,6 +1045,11 @@ pyfrozenset = StackObject(
     obtype=set,
     doc="A Python frozenset object.")
 
+pybuffer = StackObject(
+    name='buffer',
+    obtype=object,
+    doc="A Python buffer-like object.")
+
 anyobject = StackObject(
     name='any',
     obtype=object,
@@ -1360,6 +1365,24 @@ opcodes = [
       the number of bytes in the bytearray, and the second is that many bytes,
       which are taken literally as the bytearray content.
       """),
+
+    # Out-of-band buffer (protocol 5 and higher)
+
+    I(name='NEXT_BUFFER',
+      code='\x97',
+      arg=None,
+      stack_before=[],
+      stack_after=[pybuffer],
+      proto=5,
+      doc="Push an out-of-band buffer object."),
+
+    I(name='READONLY_BUFFER',
+      code='\x98',
+      arg=None,
+      stack_before=[pybuffer],
+      stack_after=[pybuffer],
+      proto=5,
+      doc="Make an out-of-band buffer object read-only."),
 
     # Ways to spell None.
 
