@@ -6,8 +6,8 @@ import unittest
 
 class OptimizedPickleTests(AbstractPickleTests):
 
-    def dumps(self, arg, proto=None):
-        return pickletools.optimize(pickle.dumps(arg, proto))
+    def dumps(self, arg, proto=None, **kwargs):
+        return pickletools.optimize(pickle.dumps(arg, proto, **kwargs))
 
     def loads(self, buf, **kwds):
         return pickle.loads(buf, **kwds)

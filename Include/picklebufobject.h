@@ -17,9 +17,9 @@ PyAPI_FUNC(PyObject *) PyPickleBuffer_FromObject(PyObject *);
 /* Get the PickleBuffer's underlying view to the original object
  * (NULL if released)
  */
-const Py_buffer *PyPickleBuffer_GetBuffer(PyObject *);
+PyAPI_FUNC(const Py_buffer *) PyPickleBuffer_GetBuffer(PyObject *);
 /* Release the PickleBuffer.  Returns 0 on success, -1 on error. */
-int PyPickleBuffer_Release(PyObject *);
+PyAPI_FUNC(int) PyPickleBuffer_Release(PyObject *);
 
 #ifdef __cplusplus
 }

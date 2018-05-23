@@ -1105,6 +1105,7 @@ _Pickler_New(void)
 
     self->pers_func = NULL;
     self->dispatch_table = NULL;
+    self->buffer_callback = NULL;
     self->write = NULL;
     self->proto = 0;
     self->bin = 0;
@@ -1171,6 +1172,23 @@ _Pickler_SetOutputStream(PicklerObject *self, PyObject *file)
         return -1;
     }
 
+    return 0;
+}
+
+static int
+_Pickler_SetBufferCallback(PicklerObject *self, PyObject *buffer_callback)
+{
+    if (buffer_callback == Py_None) {
+        buffer_callback = NULL;
+    }
+    if (buffer_callback != NULL && self->proto < 5) {
+        PyErr_SetString(PyExc_ValueError,
+                        "buffer_callback needs protocol >= 5");
+        return -1;
+    }
+
+    Py_XINCREF(buffer_callback);
+    self->buffer_callback = buffer_callback;
     return 0;
 }
 
@@ -1553,6 +1571,7 @@ _Unpickler_New(void)
     self->readinto = NULL;
     self->readline = NULL;
     self->peek = NULL;
+    self->buffers = NULL;
     self->encoding = NULL;
     self->errors = NULL;
     self->marks = NULL;
@@ -4585,6 +4604,9 @@ _pickle_Pickler___init___impl(PicklerObject *self, PyObject *file,
     if (_Pickler_SetOutputStream(self, file) < 0)
         return -1;
 
+    if (_Pickler_SetBufferCallback(self, buffer_callback) < 0)
+        return -1;
+
     /* memo and output_buffer may have already been created in _Pickler_New */
     if (self->memo == NULL) {
         self->memo = PyMemoTable_New();
@@ -4603,8 +4625,6 @@ _pickle_Pickler___init___impl(PicklerObject *self, PyObject *file,
     self->fast = 0;
     self->fast_nesting = 0;
     self->fast_memo = NULL;
-    Py_XINCREF(buffer_callback);
-    self->buffer_callback = buffer_callback;
 
     if (init_method_ref((PyObject *)self, &PyId_persistent_id,
                         &self->pers_func, &self->pers_func_self) < 0)
@@ -7551,8 +7571,8 @@ _pickle_dump_impl(PyObject *module, PyObject *obj, PyObject *file,
     if (_Pickler_SetOutputStream(pickler, file) < 0)
         goto error;
 
-    Py_XINCREF(buffer_callback);
-    pickler->buffer_callback = buffer_callback;
+    if (_Pickler_SetBufferCallback(pickler, buffer_callback) < 0)
+        goto error;
 
     if (dump(pickler, obj) < 0)
         goto error;
@@ -7613,8 +7633,8 @@ _pickle_dumps_impl(PyObject *module, PyObject *obj, PyObject *protocol,
     if (_Pickler_SetProtocol(pickler, protocol, fix_imports) < 0)
         goto error;
 
-    Py_XINCREF(buffer_callback);
-    pickler->buffer_callback = buffer_callback;
+    if (_Pickler_SetBufferCallback(pickler, buffer_callback) < 0)
+        goto error;
 
     if (dump(pickler, obj) < 0)
         goto error;

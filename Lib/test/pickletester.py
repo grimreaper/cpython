@@ -174,6 +174,55 @@ def create_dynamic_class(name, bases):
     result.reduce_args = (name, bases)
     return result
 
+
+class ZeroCopyBytes(bytes):
+
+    def __reduce_ex__(self, protocol):
+        if protocol >= 5:
+            return type(self)._reconstruct, (pickle.PickleBuffer(self),), None
+        else:
+            return type(self)._reconstruct, (bytes(self),)
+
+    def __repr__(self):
+        return "{}({!r})".format(self.__class__.__name__, bytes(self))
+
+    __str__ = __repr__
+
+    @classmethod
+    def _reconstruct(cls, obj):
+        with memoryview(obj) as m:
+            obj = m.obj
+            if type(obj) is cls:
+                # Zero-copy
+                return obj
+            else:
+                return cls(obj)
+
+
+class ZeroCopyBytearray(bytearray):
+
+    def __reduce_ex__(self, protocol):
+        if protocol >= 5:
+            return type(self)._reconstruct, (pickle.PickleBuffer(self),), None
+        else:
+            return type(self)._reconstruct, (bytes(self),)
+
+    def __repr__(self):
+        return "{}({!r})".format(self.__class__.__name__, bytes(self))
+
+    __str__ = __repr__
+
+    @classmethod
+    def _reconstruct(cls, obj):
+        with memoryview(obj) as m:
+            obj = m.obj
+            if type(obj) is cls:
+                # Zero-copy
+                return obj
+            else:
+                return cls(obj)
+
+
 # DATA0 .. DATA4 are the pickles we expect under the various protocols, for
 # the object returned by create_data().
 
@@ -2439,6 +2488,85 @@ class AbstractPickleTests(unittest.TestCase):
             with self.assertRaises((AttributeError, pickle.PicklingError)):
                 pickletools.dis(self.dumps(f, proto))
 
+    def test_in_band_buffers(self):
+        # Test in-band buffers (PEP 574)
+        for obj, readonly in [(ZeroCopyBytes(b"foo"), True),
+                              (ZeroCopyBytearray(b"foo"), False),
+                              ]:
+            for proto in range(0, pickle.HIGHEST_PROTOCOL + 1):
+                data = self.dumps(obj, proto)
+                self.assertIn(b"foo", data)
+                self.assertEqual(count_opcode(pickle.NEXT_BUFFER, data), 0)
+                if proto >= 5:
+                    self.assertEqual(count_opcode(pickle.SHORT_BINBYTES, data),
+                                     1 if readonly else 0)
+                    self.assertEqual(count_opcode(pickle.BYTEARRAY8, data),
+                                     0 if readonly else 1)
+
+                new = self.loads(data)
+                # It's a copy
+                self.assertIsNot(new, obj)
+                self.assertIs(type(new), type(obj))
+                self.assertEqual(new, obj)
+
+    def test_oob_buffers(self):
+        # Test out-of-band buffers (PEP 574)
+        for obj, readonly in [(ZeroCopyBytes(b"foo"), True),
+                              (ZeroCopyBytearray(b"foo"), False),
+                              ]:
+            for proto in range(0, 5):
+                # Need protocol >= 5 for buffer_callback
+                with self.assertRaises(ValueError):
+                    self.dumps(obj, proto,
+                               buffer_callback=[].extend)
+            for proto in range(5, pickle.HIGHEST_PROTOCOL + 1):
+                buffers = []
+                buffer_callback = buffers.extend
+                data = self.dumps(obj, proto,
+                                  buffer_callback=buffer_callback)
+                self.assertNotIn(b"foo", data)
+                self.assertEqual(count_opcode(pickle.SHORT_BINBYTES, data), 0)
+                self.assertEqual(count_opcode(pickle.BYTEARRAY8, data), 0)
+                self.assertEqual(count_opcode(pickle.NEXT_BUFFER, data), 1)
+                self.assertEqual(count_opcode(pickle.READONLY_BUFFER, data),
+                                 1 if readonly else 0)
+
+                self.assertEqual(bytes(buffers[0]), b"foo")
+                # Need buffers argument to unpickle properly
+                with self.assertRaises(pickle.UnpicklingError):
+                    self.loads(data)
+                # Zero-copy achieved
+                new = self.loads(data, buffers=buffers)
+                self.assertIs(new, obj)
+                # Non-sequence buffers accepted too
+                new = self.loads(data, buffers=iter(buffers))
+                self.assertIs(new, obj)
+
+    def test_picklebuffer_error(self):
+        # PickleBuffer forbidden with protocol < 5
+        pb = pickle.PickleBuffer(b"foo")
+        for proto in range(0, 5):
+            with self.assertRaises(pickle.PickleError):
+                self.dumps(pb, proto)
+
+    def test_buffer_callback_error(self):
+        def buffer_callback(buffers):
+            1/0
+        pb = pickle.PickleBuffer(b"foo")
+        with self.assertRaises(ZeroDivisionError):
+            self.dumps(pb, 5, buffer_callback=buffer_callback)
+
+    def test_buffers_error(self):
+        pb = pickle.PickleBuffer(b"foo")
+        for proto in range(5, pickle.HIGHEST_PROTOCOL + 1):
+            data = self.dumps(pb, proto, buffer_callback=[].extend)
+            # Non iterable buffers
+            with self.assertRaises(TypeError):
+                self.loads(data, buffers=object())
+            # Buffer iterable exhausts too early
+            with self.assertRaises(pickle.UnpicklingError):
+                self.loads(data, buffers=[])
+
 
 class BigmemPickleTests(unittest.TestCase):
 
@@ -2746,6 +2874,47 @@ class AbstractPickleModuleTests(unittest.TestCase):
 
         self.assertRaises(pickle.PicklingError, BadPickler().dump, 0)
         self.assertRaises(pickle.UnpicklingError, BadUnpickler().load)
+
+    def check_dumps_loads_oob_buffers(self, dumps, loads):
+        # No need to do the full gamut of tests here, just enough to
+        # check that dumps() and loads() redirect their arguments
+        # to the underlying Pickler and Unpickler, respectively.
+        obj = ZeroCopyBytes(b"foo")
+
+        for proto in range(0, 5):
+            # Need protocol >= 5 for buffer_callback
+            with self.assertRaises(ValueError):
+                dumps(obj, protocol=proto,
+                      buffer_callback=[].extend)
+        for proto in range(5, pickle.HIGHEST_PROTOCOL + 1):
+            buffers = []
+            buffer_callback = buffers.extend
+            data = dumps(obj, protocol=proto,
+                         buffer_callback=buffer_callback)
+            self.assertNotIn(b"foo", data)
+            self.assertEqual(bytes(buffers[0]), b"foo")
+            # Need buffers argument to unpickle properly
+            with self.assertRaises(pickle.UnpicklingError):
+                loads(data)
+            new = loads(data, buffers=buffers)
+            self.assertIs(new, obj)
+
+    def test_dumps_loads_oob_buffers(self):
+        # Test out-of-band buffers (PEP 574) with top-level dumps() and loads()
+        self.check_dumps_loads_oob_buffers(self.dumps, self.loads)
+
+    def test_dump_load_oob_buffers(self):
+        # Test out-of-band buffers (PEP 574) with top-level dump() and load()
+        def dumps(obj, **kwargs):
+            f = io.BytesIO()
+            self.dump(obj, f, **kwargs)
+            return f.getvalue()
+
+        def loads(data, **kwargs):
+            f = io.BytesIO(data)
+            return self.load(f, **kwargs)
+
+        self.check_dumps_loads_oob_buffers(dumps, loads)
 
 
 class AbstractPersistentPicklerTests(unittest.TestCase):
