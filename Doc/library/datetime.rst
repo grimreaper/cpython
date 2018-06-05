@@ -1331,7 +1331,7 @@ Using datetime with tzinfo:
     ...             return timedelta(hours=4, minutes=30)
     ...
     ...     def fromutc(self, dt):
-    ...         # A custom implementation is required for `fromutc` as
+    ...         # A custom implementation is required for fromutc as
     ...         # the input to this function is a datetime with utc values
     ...         # but with a tzinfo set to self
     ...         # See datetime.astimezone or fromtimestamp
