@@ -1318,19 +1318,42 @@ Using datetime with tzinfo:
 
     >>> from datetime import timedelta, datetime, tzinfo, timezone
     >>> class KabulTz(tzinfo):
-    ...     # Kabul used +4 until 1045, when they moved to +4:30
+    ...     # Kabul used +4 until 1945, when they moved to +4:30
+    ...     UTC_MOVE_DATE = datetime(1944, 12, 31, 20, tzinfo=timezone.utc)
     ...     def utcoffset(self, dt):
-    ...         if dt.year >= 1945:
-    ...             return timedelta(hours=4, minutes=30)
-    ...         else:
+    ...         if dt.year < 1945:
     ...             return timedelta(hours=4)
+    ...         elif (1945, 1, 1, 0, 0) <= dt.timetuple()[:5] < (1945, 1, 1, 0, 30):
+    ...             # If dt falls in the imaginary range, use fold to decide how
+    ...             # to resolve. See PEP495
+    ...             return timedelta(hours=4, minutes=(30 if dt.fold else 0))
+    ...         else:
+    ...             return timedelta(hours=4, minutes=30)
+    ...
+    ...     def fromutc(self, dt):
+    ...         # A custom implementation is required for `fromutc` as
+    ...         # the input to this function is a datetime with utc values
+    ...         # but with a tzinfo set to self
+    ...         # See datetime.astimezone or fromtimestamp
+    ...
+    ...         # Follow same validations as in datetime.tzinfo
+    ...         if not isinstance(dt, datetime):
+    ...             raise TypeError("fromutc() requires a datetime argument")
+    ...         if dt.tzinfo is not self:
+    ...             raise ValueError("dt.tzinfo is not self")
+    ...
+    ...         if dt.replace(tzinfo=timezone.utc) >= self.UTC_MOVE_DATE:
+    ...             return dt + timedelta(hours=4, minutes=30)
+    ...         else:
+    ...             return dt + timedelta(hours=4)
+    ...
     ...     def dst(self, dt):
-    ...             return timedelta(0)
+    ...         return timedelta(0)
+    ...
     ...     def tzname(self,dt):
     ...         return "Asia/Kabul"
     ...
-    ...
-    >>> tz1 =KabulTz()
+    >>> tz1 = KabulTz()
     >>> # Datetime before the change
     >>> dt1 = datetime(1900, 11, 21, 16, 30, tzinfo=tz1)
     >>> dt1.utcoffset()
@@ -1344,7 +1367,7 @@ Using datetime with tzinfo:
     >>> dt3     # doctest: +ELLIPSIS
     datetime.datetime(2006, 6, 14, 8, 30, tzinfo=datetime.timezone.utc)
     >>> dt2     # doctest: +ELLIPSIS
-    datetime.datetime(2006, 6, 14, 13, 0, tzinfo=<KabulTz object at 0x...>)
+    datetime.datetime(2006, 6, 14, 13, 0, tzinfo=<...KabulTz object at 0x...>)
     >>> dt2.utctimetuple() == dt3.utctimetuple()
     True
 
