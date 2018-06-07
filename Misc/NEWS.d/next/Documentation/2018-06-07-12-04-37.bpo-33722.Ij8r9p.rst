@@ -1,0 +1,2 @@
+Add an example on unittest.mock.mock_open that uses 'builtins.open', to
+demonstrate mocking another module.
