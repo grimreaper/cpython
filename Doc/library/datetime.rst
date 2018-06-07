@@ -1350,8 +1350,11 @@ Using datetime with tzinfo:
     ...     def dst(self, dt):
     ...         return timedelta(0)
     ...
-    ...     def tzname(self,dt):
-    ...         return "Asia/Kabul"
+    ...     def tzname(self, dt):
+    ...         if dt >= self.UTC_MOVE_DATE:
+    ...             return "+04:30"
+    ...         else:
+    ...             return "+04"
     ...
     >>> tz1 = KabulTz()
     >>> # Datetime before the change
