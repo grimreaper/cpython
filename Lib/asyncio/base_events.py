@@ -490,7 +490,7 @@ class BaseEventLoop(events.AbstractEventLoop):
         self._asyncgens.clear()
 
         results = await tasks.gather(
-            *[ag.aclose() for ag in closing_agens],
+            *[ag.aclose() for ag in closing_agens if not ag.ag_running],
             return_exceptions=True,
             loop=self)
 

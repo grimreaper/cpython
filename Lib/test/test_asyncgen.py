@@ -111,19 +111,26 @@ class AsyncGenTest(unittest.TestCase):
         def async_iterate(g):
             res = []
             while True:
+                an = g.__anext__()
                 try:
-                    g.__anext__().__next__()
+                    while True:
+                        try:
+                            an.__next__()
+                        except StopIteration as ex:
+                            if ex.args:
+                                res.append(ex.args[0])
+                                break
+                            else:
+                                res.append('EMPTY StopIteration')
+                                break
+                        except StopAsyncIteration:
+                            raise
+                        except Exception as ex:
+                            res.append(str(type(ex)))
+                            break
                 except StopAsyncIteration:
                     res.append('STOP')
                     break
-                except StopIteration as ex:
-                    if ex.args:
-                        res.append(ex.args[0])
-                    else:
-                        res.append('EMPTY StopIteration')
-                        break
-                except Exception as ex:
-                    res.append(str(type(ex)))
             return res
 
         sync_gen_result = sync_iterate(sync_gen)
@@ -151,19 +158,22 @@ class AsyncGenTest(unittest.TestCase):
 
         g = gen()
         ai = g.__aiter__()
-        self.assertEqual(ai.__anext__().__next__(), ('result',))
+
+        an = ai.__anext__()
+        self.assertEqual(an.__next__(), ('result',))
 
         try:
-            ai.__anext__().__next__()
+            an.__next__()
         except StopIteration as ex:
             self.assertEqual(ex.args[0], 123)
         else:
             self.fail('StopIteration was not raised')
 
-        self.assertEqual(ai.__anext__().__next__(), ('result',))
+        an = ai.__anext__()
+        self.assertEqual(an.__next__(), ('result',))
 
         try:
-            ai.__anext__().__next__()
+            an.__next__()
         except StopAsyncIteration as ex:
             self.assertFalse(ex.args)
         else:
@@ -187,10 +197,11 @@ class AsyncGenTest(unittest.TestCase):
 
         g = gen()
         ai = g.__aiter__()
-        self.assertEqual(ai.__anext__().__next__(), ('result',))
+        an = ai.__anext__()
+        self.assertEqual(an.__next__(), ('result',))
 
         try:
-            ai.__anext__().__next__()
+            an.__next__()
         except StopIteration as ex:
             self.assertEqual(ex.args[0], 123)
         else:
@@ -590,17 +601,13 @@ class AsyncGenAsyncioTest(unittest.TestCase):
             gen = foo()
             it = gen.__aiter__()
             self.assertEqual(await it.__anext__(), 1)
-            t = self.loop.create_task(it.__anext__())
-            await asyncio.sleep(0.01, loop=self.loop)
             await gen.aclose()
-            return t
 
-        t = self.loop.run_until_complete(run())
+        self.loop.run_until_complete(run())
         self.assertEqual(DONE, 1)
 
         # Silence ResourceWarnings
         fut.cancel()
-        t.cancel()
         self.loop.run_until_complete(asyncio.sleep(0.01, loop=self.loop))
 
     def test_async_gen_asyncio_gc_aclose_09(self):
@@ -997,46 +1004,16 @@ class AsyncGenAsyncioTest(unittest.TestCase):
 
         self.loop.run_until_complete(asyncio.sleep(0.1, loop=self.loop))
 
-        self.loop.run_until_complete(self.loop.shutdown_asyncgens())
-        self.assertEqual(finalized, 2)
-
         # Silence warnings
         t1.cancel()
         t2.cancel()
-        self.loop.run_until_complete(asyncio.sleep(0.1, loop=self.loop))
+        with self.assertRaises(asyncio.CancelledError):
+            self.loop.run_until_complete(t1)
+        with self.assertRaises(asyncio.CancelledError):
+            self.loop.run_until_complete(t2)
 
-    def test_async_gen_asyncio_shutdown_02(self):
-        logged = 0
-
-        def logger(loop, context):
-            nonlocal logged
-            self.assertIn('asyncgen', context)
-            expected = 'an error occurred during closing of asynchronous'
-            if expected in context['message']:
-                logged += 1
-
-        async def waiter(timeout):
-            try:
-                await asyncio.sleep(timeout, loop=self.loop)
-                yield 1
-            finally:
-                1 / 0
-
-        async def wait():
-            async for _ in waiter(1):
-                pass
-
-        t = self.loop.create_task(wait())
-        self.loop.run_until_complete(asyncio.sleep(0.1, loop=self.loop))
-
-        self.loop.set_exception_handler(logger)
         self.loop.run_until_complete(self.loop.shutdown_asyncgens())
-
-        self.assertEqual(logged, 1)
-
-        # Silence warnings
-        t.cancel()
-        self.loop.run_until_complete(asyncio.sleep(0.1, loop=self.loop))
+        self.assertEqual(finalized, 2)
 
     def test_async_gen_expression_01(self):
         async def arange(n):
