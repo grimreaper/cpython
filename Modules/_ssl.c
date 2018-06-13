@@ -852,7 +852,8 @@ _ssl_configure_hostname(PySSLSocket *self, const char* server_hostname)
     if (self->ctx->check_hostname) {
         X509_VERIFY_PARAM *param = SSL_get0_param(self->ssl);
         if (ip == NULL) {
-            if (!X509_VERIFY_PARAM_set1_host(param, server_hostname, 0)) {
+            if (!X509_VERIFY_PARAM_set1_host(param, server_hostname,
+                                             strlen(server_hostname))) {
                 _setSSLError(NULL, 0, __FILE__, __LINE__);
                 goto error;
             }
@@ -881,7 +882,6 @@ newPySSLSocket(PySSLContext *sslctx, PySocketSockObject *sock,
 {
     PySSLSocket *self;
     SSL_CTX *ctx = sslctx->ctx;
-    long mode;
 
     self = PyObject_New(PySSLSocket, &PySSLSocket_Type);
     if (self == NULL)
@@ -901,7 +901,6 @@ newPySSLSocket(PySSLContext *sslctx, PySocketSockObject *sock,
 #endif
 
     /* Make sure the SSL error state is initialized */
-    (void) ERR_get_state();
     ERR_clear_error();
 
     PySSL_BEGIN_ALLOW_THREADS
@@ -918,11 +917,8 @@ newPySSLSocket(PySSLContext *sslctx, PySocketSockObject *sock,
         BIO_up_ref(outbio->bio);
         SSL_set_bio(self->ssl, inbio->bio, outbio->bio);
     }
-    mode = SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER;
-#ifdef SSL_MODE_AUTO_RETRY
-    mode |= SSL_MODE_AUTO_RETRY;
-#endif
-    SSL_set_mode(self->ssl, mode);
+    SSL_set_mode(self->ssl,
+                 SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_AUTO_RETRY);
 
     if (server_hostname != NULL) {
         if (_ssl_configure_hostname(self, server_hostname) < 0) {
@@ -4025,7 +4021,7 @@ _ssl__SSLContext__wrap_socket_impl(PySSLContext *self, PyObject *sock,
     PyObject *res;
 
     /* server_hostname is either None (or absent), or to be encoded
-       as IDN A-label (ASCII str). */
+       as IDN A-label (ASCII str) without NULL bytes. */
     if (hostname_obj != Py_None) {
         if (!PyArg_Parse(hostname_obj, "es", "ascii", &hostname))
             return NULL;
@@ -4063,7 +4059,7 @@ _ssl__SSLContext__wrap_bio_impl(PySSLContext *self, PySSLMemoryBIO *incoming,
     PyObject *res;
 
     /* server_hostname is either None (or absent), or to be encoded
-       as IDN A-label (ASCII str). */
+       as IDN A-label (ASCII str) without NULL bytes. */
     if (hostname_obj != Py_None) {
         if (!PyArg_Parse(hostname_obj, "es", "ascii", &hostname))
             return NULL;
@@ -5847,6 +5843,10 @@ PyInit__ssl(void)
 #ifdef SSL_OP_ENABLE_MIDDLEBOX_COMPAT
     PyModule_AddIntConstant(m, "OP_ENABLE_MIDDLEBOX_COMPAT",
                             SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+#endif
+#ifdef SSL_OP_NO_RENEGOTIATION
+    PyModule_AddIntConstant(m, "OP_NO_RENEGOTIATION",
+                            SSL_OP_NO_RENEGOTIATION);
 #endif
 
 #ifdef X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT

@@ -90,13 +90,14 @@ class ImportTests(unittest.TestCase):
         self.assertEqual(cm.exception.path, os.__file__)
         self.assertRegex(str(cm.exception), r"cannot import name 'i_dont_exist' from 'os' \(.*os.py\)")
 
+    @cpython_only
     def test_from_import_missing_attr_has_name_and_so_path(self):
-        import select
+        import _testcapi
         with self.assertRaises(ImportError) as cm:
-            from select import i_dont_exist
-        self.assertEqual(cm.exception.name, 'select')
-        self.assertEqual(cm.exception.path, select.__file__)
-        self.assertRegex(str(cm.exception), r"cannot import name 'i_dont_exist' from 'select' \(.*\.(so|pyd)\)")
+            from _testcapi import i_dont_exist
+        self.assertEqual(cm.exception.name, '_testcapi')
+        self.assertEqual(cm.exception.path, _testcapi.__file__)
+        self.assertRegex(str(cm.exception), r"cannot import name 'i_dont_exist' from '_testcapi' \(.*\.(so|pyd)\)")
 
     def test_from_import_missing_attr_has_name(self):
         with self.assertRaises(ImportError) as cm:
@@ -118,7 +119,7 @@ class ImportTests(unittest.TestCase):
                 f.write("__all__ = [b'invalid_type']")
             globals = {}
             with self.assertRaisesRegex(
-                TypeError, f"{re.escape(name)}\.__all__ must be str"
+                TypeError, f"{re.escape(name)}\\.__all__ must be str"
             ):
                 exec(f"from {name} import *", globals)
             self.assertNotIn(b"invalid_type", globals)
@@ -127,7 +128,7 @@ class ImportTests(unittest.TestCase):
                 f.write("globals()[b'invalid_type'] = object()")
             globals = {}
             with self.assertRaisesRegex(
-                TypeError, f"{re.escape(name)}\.__dict__ must be str"
+                TypeError, f"{re.escape(name)}\\.__dict__ must be str"
             ):
                 exec(f"from {name} import *", globals)
             self.assertNotIn(b"invalid_type", globals)
@@ -847,8 +848,11 @@ class PycacheTests(unittest.TestCase):
         unload(TESTFN)
         importlib.invalidate_caches()
         m = __import__(TESTFN)
-        self.assertEqual(m.__file__,
-                         os.path.join(os.curdir, os.path.relpath(pyc_file)))
+        try:
+            self.assertEqual(m.__file__,
+                             os.path.join(os.curdir, os.path.relpath(pyc_file)))
+        finally:
+            os.remove(pyc_file)
 
     def test___cached__(self):
         # Modules now also have an __cached__ that points to the pyc file.

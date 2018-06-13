@@ -246,6 +246,8 @@ _code_type = type(_write_atomic.__code__)
 #     Python 3.7a2  3391 (update GET_AITER #31709)
 #     Python 3.7a4  3392 (PEP 552: Deterministic pycs #31650)
 #     Python 3.7b1  3393 (remove STORE_ANNOTATION opcode #32550)
+#     Python 3.7b5  3394 (restored docstring as the firts stmt in the body;
+#                         this might affected the first line number #32911)
 #     Python 3.8a1  3400 (move frame block handling to compiler #17611)
 #     Python 3.8a1  3401 (add END_ASYNC_FOR #33041)
 #
@@ -1181,8 +1183,10 @@ class PathFinder:
     def invalidate_caches(cls):
         """Call the invalidate_caches() method on all path entry finders
         stored in sys.path_importer_caches (where implemented)."""
-        for finder in sys.path_importer_cache.values():
-            if hasattr(finder, 'invalidate_caches'):
+        for name, finder in list(sys.path_importer_cache.items()):
+            if finder is None:
+                del sys.path_importer_cache[name]
+            elif hasattr(finder, 'invalidate_caches'):
                 finder.invalidate_caches()
 
     @classmethod
