@@ -135,7 +135,9 @@ of available options is shown below.
 | DefaultJustForMeTargetDir | The default install directory for    | :file:`%LocalAppData%\\\ |
 |                           | just-for-me installs                 | Programs\\PythonXY` or   |
 |                           |                                      | :file:`%LocalAppData%\\\ |
-|                           |                                      | Programs\\PythonXY-32`   |
+|                           |                                      | Programs\\PythonXY-32` or|
+|                           |                                      | :file:`%LocalAppData%\\\ |
+|                           |                                      | Programs\\PythonXY-64`   |
 +---------------------------+--------------------------------------+--------------------------+
 | DefaultCustomTargetDir    | The default custom install directory | (empty)                  |
 |                           | displayed in the UI                  |                          |
@@ -581,9 +583,12 @@ on Windows which you hope will be useful on Unix, you should use one of the
 shebang lines starting with ``/usr``.
 
 Any of the above virtual commands can be suffixed with an explicit version
-(either just the major version, or the major and minor version) - for example
-``/usr/bin/python2.7`` - which will cause that specific version to be located
-and used.
+(either just the major version, or the major and minor version)
+plus optionally an architecture (32 bits or 64 bits) - for example
+``/usr/bin/python2.7-32`` - which will cause that specific version to be
+located and used. Please note that the option to specifify "-64"
+(in contrary to "-32") and the option to specifify an major and architecture
+without minor are supported since the python launcher 3.7.
 
 The ``/usr/bin/env`` form of shebang line has one further special property.
 Before looking for installed Python interpreters, this form will search the
@@ -625,9 +630,11 @@ Customizing default Python versions
 In some cases, a version qualifier can be included in a command to dictate
 which version of Python will be used by the command. A version qualifier
 starts with a major version number and can optionally be followed by a period
-('.') and a minor version specifier. If the minor qualifier is specified, it
-may optionally be followed by "-32" to indicate the 32-bit implementation of
-that version be used.
+('.') and a minor version specifier. Furthermore it is possible to specifiy
+if a 32 or 64 bit implementation shall be enforced by adding "-32" or "-64".
+Please notice that "-64" (in contrary to "-32") and the variant "major-bits"
+(without specifiying a minor) are available only since Python Launcher 3.7
+or newer.
 
 For example, a shebang line of ``#!python`` has no version qualifier, while
 ``#!python3`` has a version qualifier which specifies only a major version.
@@ -635,7 +642,9 @@ For example, a shebang line of ``#!python`` has no version qualifier, while
 If no version qualifiers are found in a command, the environment variable
 ``PY_PYTHON`` can be set to specify the default version qualifier - the default
 value is "2". Note this value could specify just a major version (e.g. "2") or
-a major.minor qualifier (e.g. "2.6"), or even major.minor-32.
+a major.minor qualifier (e.g. "2.6"), or even major.minor-32 / major.minor-64.
+Please notice that "major.minior-64" is only available since python launcher
+3.7 or newer.
 
 If no minor version qualifiers are found, the environment variable
 ``PY_PYTHON{major}`` (where ``{major}`` is the current major version qualifier
@@ -653,8 +662,8 @@ of the specified version if available. This is so the behavior of the launcher
 can be predicted knowing only what versions are installed on the PC and
 without regard to the order in which they were installed (i.e., without knowing
 whether a 32 or 64-bit version of Python and corresponding launcher was
-installed last). As noted above, an optional "-32" suffix can be used on a
-version specifier to change this behaviour.
+installed last). As noted above, an optional "-32" / "-64" suffix can be
+used on a version specifier to change this behaviour.
 
 Examples:
 
