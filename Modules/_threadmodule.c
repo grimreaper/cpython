@@ -1103,7 +1103,9 @@ thread to exit silently unless the exception is caught.");
 static PyObject *
 thread_PyThread_interrupt_main(PyObject * self, PyObject *Py_UNUSED(ignored))
 {
-    PyErr_SetInterrupt();
+    if (PyErr_SetInterruptWithErr() < 0) {
+        return NULL;
+    }
     Py_RETURN_NONE;
 }
 

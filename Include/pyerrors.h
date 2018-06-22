@@ -356,6 +356,7 @@ PyAPI_FUNC(PyObject *) _PyErr_TrySetFromCause(
 /* In signalmodule.c */
 PyAPI_FUNC(int) PyErr_CheckSignals(void);
 PyAPI_FUNC(void) PyErr_SetInterrupt(void);
+PyAPI_FUNC(int) PyErr_SetInterruptWithErr(void);
 
 /* In signalmodule.c */
 #ifndef Py_LIMITED_API
