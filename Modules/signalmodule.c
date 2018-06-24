@@ -1612,9 +1612,7 @@ PyErr_CheckSignals(void)
    raised.
 
    The SIGINT signal must be handled by Python, otherwise an exception is
-   raised and return -1. Return 0 on success.
-
-   The GIL doesn't need to be hold to call this function. */
+   raised and return -1. Return 0 on success. */
 int
 PyErr_SetInterruptWithErr(void)
 {
