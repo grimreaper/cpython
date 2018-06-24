@@ -721,7 +721,7 @@ as internal buffering of data.
    *offset_src*, to file descriptor *dst*, starting from offset *offset_dst*.
    If *offset_src* is None, then *src* is read from the current position;
    respectively for *offset_dst*. The files pointed by *src* and *dst*
-   must reside in the same filesystem, otherwise a :exc:`OSError` is
+   must reside in the same filesystem, otherwise an :exc:`OSError` is
    raised with :attr:`~OSError.errno` set to :data:`errno.EXDEV`.
 
    This copy is done without the additional cost of transferring data

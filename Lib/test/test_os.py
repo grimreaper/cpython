@@ -307,7 +307,7 @@ class FileTests(unittest.TestCase):
             # 012 are skipped (in_skip)
             # 345678 are copied in the file (in_skip + bytes_to_copy)
             self.assertEqual(read[out_seek:],
-                             data[in_skip:in_skip+bytes_to_copy])
+                             data[in_skip:in_skip+i])
 
 # Test attributes on return values from os.*stat* family.
 class StatAttributeTests(unittest.TestCase):

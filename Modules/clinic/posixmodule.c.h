@@ -4188,7 +4188,7 @@ PyDoc_STRVAR(os_copy_file_range__doc__,
     {"copy_file_range", (PyCFunction)os_copy_file_range, METH_FASTCALL|METH_KEYWORDS, os_copy_file_range__doc__},
 
 static PyObject *
-os_copy_file_range_impl(PyObject *module, int src, int dst, int count,
+os_copy_file_range_impl(PyObject *module, int src, int dst, PyObject *count,
                         PyObject *offset_src, PyObject *offset_dst);
 
 static PyObject *
@@ -4196,10 +4196,10 @@ os_copy_file_range(PyObject *module, PyObject *const *args, Py_ssize_t nargs, Py
 {
     PyObject *return_value = NULL;
     static const char * const _keywords[] = {"src", "dst", "count", "offset_src", "offset_dst", NULL};
-    static _PyArg_Parser _parser = {"iii|OO:copy_file_range", _keywords, 0};
+    static _PyArg_Parser _parser = {"iiO|OO:copy_file_range", _keywords, 0};
     int src;
     int dst;
-    int count;
+    PyObject *count;
     PyObject *offset_src = Py_None;
     PyObject *offset_dst = Py_None;
 
@@ -6685,4 +6685,4 @@ exit:
 #ifndef OS_GETRANDOM_METHODDEF
     #define OS_GETRANDOM_METHODDEF
 #endif /* !defined(OS_GETRANDOM_METHODDEF) */
-/*[clinic end generated code: output=202ca6a560af2d04 input=a9049054013a1b77]*/
+/*[clinic end generated code: output=e995727a944a3e25 input=a9049054013a1b77]*/

@@ -106,8 +106,8 @@ corresponding Unix manual entries for more information on calls.");
 #endif
 
 #ifdef HAVE_COPY_FILE_RANGE
-/* #include <sys/syscall.h> */
-/* #include <unistd.h> */
+#include <sys/syscall.h>
+#include <unistd.h>
 #endif
 
 #if !defined(CPU_ALLOC) && defined(HAVE_SCHED_SETAFFINITY)
@@ -9156,7 +9156,7 @@ os.copy_file_range
         Source file descriptor.
     dst: int
         Destination file descriptor.
-    count: int
+    count: object
         Number of bytes to copy.
     offset_src: object = None
         Starting offset in src.
@@ -9170,10 +9170,11 @@ respectively for offset_dst.
 [clinic start generated code]*/
 
 static PyObject *
-os_copy_file_range_impl(PyObject *module, int src, int dst, int count,
+os_copy_file_range_impl(PyObject *module, int src, int dst, PyObject *count,
                         PyObject *offset_src, PyObject *offset_dst)
-/*[clinic end generated code: output=9f105e6cef25d2d1 input=25f27461ce4ddc9d]*/
+/*[clinic end generated code: output=cf3b03d69d951717 input=9bc40b304c71de47]*/
 {
+    Py_ssize_t size_count;
     off_t offset_src_val, offset_dst_val;
     off_t *p_offset_src = NULL;
     off_t *p_offset_dst = NULL;
@@ -9182,6 +9183,11 @@ os_copy_file_range_impl(PyObject *module, int src, int dst, int count,
     /* The flags argument is provided to allow
      * for future extensions and currently must be to 0. */
     int flags = 0;
+
+    size_count = PyLong_AsSize_t(count);
+    if(size_count == -1 && PyErr_Occurred()) {
+        return NULL;
+    }
 
     if (offset_src != Py_None) {
         if (!Py_off_t_converter(offset_src, &offset_src_val)) {
@@ -9200,9 +9206,7 @@ os_copy_file_range_impl(PyObject *module, int src, int dst, int count,
     do {
         Py_BEGIN_ALLOW_THREADS
         _Py_BEGIN_SUPPRESS_IPH
-        /* The call using syscall instead of copy_file_range is to maintain compatibility
-         * with glibc<2.27 */
-        ret = syscall(__NR_copy_file_range, src, p_offset_src, dst, p_offset_dst, count, flags);
+        ret = copy_file_range(src, p_offset_src, dst, p_offset_dst, size_count, flags);
         _Py_END_SUPPRESS_IPH
         Py_END_ALLOW_THREADS
     } while (ret < 0 && errno == EINTR && !(async_err = PyErr_CheckSignals()));
@@ -9213,7 +9217,7 @@ os_copy_file_range_impl(PyObject *module, int src, int dst, int count,
 
     return PyLong_FromSsize_t(ret);
 }
-#endif /* HAVE_COPY_FILE_RANGE */
+#endif /* HAVE_COPY_FILE_RANGE*/
 
 #ifdef HAVE_MKFIFO
 /*[clinic input]
