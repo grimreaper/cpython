@@ -230,27 +230,29 @@ WriteTransport
 DatagramTransport
 -----------------
 
-.. method:: DatagramTransport.sendto(data, addr=None)
+.. class:: DatagramTransport
 
-   Send the *data* bytes to the remote peer given by *addr* (a
-   transport-dependent target address).  If *addr* is :const:`None`, the
-   data is sent to the target address given on transport creation.
+   .. method:: sendto(data, addr=None)
 
-   This method does not block; it buffers the data and arranges for it
-   to be sent out asynchronously.
+      Send the *data* bytes to the remote peer given by *addr* (a
+      transport-dependent target address).  If *addr* is :const:`None`, the
+      data is sent to the target address given on transport creation.
 
-.. method:: DatagramTransport.abort()
+      This method does not block; it buffers the data and arranges for it
+      to be sent out asynchronously.
 
-   Close the transport immediately, without waiting for pending operations
-   to complete.  Buffered data will be lost.  No more data will be received.
-   The protocol's :meth:`connection_lost` method will eventually be
-   called with :const:`None` as its argument.
+   .. method:: abort()
+
+      Close the transport immediately, without waiting for pending operations
+      to complete.  Buffered data will be lost.  No more data will be received.
+      The protocol's :meth:`connection_lost` method will eventually be
+      called with :const:`None` as its argument.
 
 
-BaseSubprocessTransport
+SubprocessTransport
 -----------------------
 
-.. class:: BaseSubprocessTransport
+.. class:: SubprocessTransport
 
    .. method:: get_pid()
 
