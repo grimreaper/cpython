@@ -712,8 +712,9 @@ class TestClassesAndFunctions(unittest.TestCase):
         self.assertEqual(varkw, varkw_e)
         self.assertEqual(defaults, defaults_e)
         if formatted is not None:
-            self.assertEqual(inspect.formatargspec(args, varargs, varkw, defaults),
-                             formatted)
+            with self.assertWarns(DeprecationWarning):
+                self.assertEqual(inspect.formatargspec(args, varargs, varkw, defaults),
+                                 formatted)
 
     def assertFullArgSpecEquals(self, routine, args_e, varargs_e=None,
                                     varkw_e=None, defaults_e=None,
@@ -729,8 +730,9 @@ class TestClassesAndFunctions(unittest.TestCase):
         self.assertEqual(kwonlydefaults, kwonlydefaults_e)
         self.assertEqual(ann, ann_e)
         if formatted is not None:
-            self.assertEqual(inspect.formatargspec(args, varargs, varkw, defaults,
-                                                    kwonlyargs, kwonlydefaults, ann),
+            with self.assertWarns(DeprecationWarning):
+                self.assertEqual(inspect.formatargspec(args, varargs, varkw, defaults,
+                                                       kwonlyargs, kwonlydefaults, ann),
                              formatted)
 
     def test_getargspec(self):
@@ -1498,6 +1500,20 @@ class TestGetcallargsFunctions(unittest.TestCase):
             pass
         with self.assertRaisesRegex(TypeError, "'a', 'b' and 'c'"):
             inspect.getcallargs(f6)
+
+        # bpo-33197
+        with self.assertRaisesRegex(ValueError,
+                                    'variadic keyword parameters cannot'
+                                    ' have default values'):
+            inspect.Parameter("foo", kind=inspect.Parameter.VAR_KEYWORD,
+                              default=42)
+        with self.assertRaisesRegex(ValueError,
+                                    "value 5 is not a valid Parameter.kind"):
+            inspect.Parameter("bar", kind=5, default=42)
+
+        with self.assertRaisesRegex(TypeError,
+                                   'name must be a str, not a int'):
+            inspect.Parameter(123, kind=4)
 
 class TestGetcallargsMethods(TestGetcallargsFunctions):
 
@@ -3098,7 +3114,8 @@ class TestParameterObject(unittest.TestCase):
         self.assertIs(p.annotation, p.empty)
         self.assertEqual(p.kind, inspect.Parameter.POSITIONAL_ONLY)
 
-        with self.assertRaisesRegex(ValueError, 'invalid value'):
+        with self.assertRaisesRegex(ValueError, "value '123' is "
+                                    "not a valid Parameter.kind"):
             inspect.Parameter('foo', default=10, kind='123')
 
         with self.assertRaisesRegex(ValueError, 'not a valid parameter name'):
@@ -3188,7 +3205,9 @@ class TestParameterObject(unittest.TestCase):
         self.assertEqual(p2.kind, p2.POSITIONAL_OR_KEYWORD)
         self.assertNotEqual(p2, p)
 
-        with self.assertRaisesRegex(ValueError, 'invalid value for'):
+        with self.assertRaisesRegex(ValueError,
+                                    "value <class 'inspect._empty'> "
+                                    "is not a valid Parameter.kind"):
             p2 = p2.replace(kind=p2.empty)
 
         p2 = p2.replace(kind=p2.KEYWORD_ONLY)
@@ -3201,7 +3220,9 @@ class TestParameterObject(unittest.TestCase):
     @cpython_only
     def test_signature_parameter_implicit(self):
         with self.assertRaisesRegex(ValueError,
-                                    'implicit arguments must be passed in as'):
+                                    'implicit arguments must be passed as '
+                                    'positional or keyword arguments, '
+                                    'not positional-only'):
             inspect.Parameter('.0', kind=inspect.Parameter.POSITIONAL_ONLY)
 
         param = inspect.Parameter(

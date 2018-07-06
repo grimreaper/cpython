@@ -1,16 +1,12 @@
-"""Test idlelib.codecontext.
+"Test codecontext, coverage 100%"
 
-Coverage: 100%
-"""
-
-import re
-
+from idlelib import codecontext
 import unittest
-from unittest import mock
 from test.support import requires
 from tkinter import Tk, Frame, Text, TclError
 
-import idlelib.codecontext as codecontext
+from unittest import mock
+import re
 from idlelib import config
 
 
@@ -56,7 +52,7 @@ class CodeContextTest(unittest.TestCase):
         frame = cls.frame = Frame(root)
         text = cls.text = Text(frame)
         text.insert('1.0', code_sample)
-        # Need to pack for creation of code context label widget.
+        # Need to pack for creation of code context text widget.
         frame.pack(side='left', fill='both', expand=1)
         text.pack(side='top', fill='both', expand=1)
         cls.editor = DummyEditwin(root, frame, text)
@@ -72,14 +68,15 @@ class CodeContextTest(unittest.TestCase):
         del cls.root
 
     def setUp(self):
+        self.text.yview(0)
         self.cc = codecontext.CodeContext(self.editor)
 
     def tearDown(self):
-        if self.cc.label:
-            self.cc.label.destroy()
+        if self.cc.context:
+            self.cc.context.destroy()
         # Explicitly call __del__ to remove scheduled scripts.
         self.cc.__del__()
-        del self.cc.label, self.cc
+        del self.cc.context, self.cc
 
     def test_init(self):
         eq = self.assertEqual
@@ -89,15 +86,13 @@ class CodeContextTest(unittest.TestCase):
         eq(cc.editwin, ed)
         eq(cc.text, ed.text)
         eq(cc.textfont, ed.text['font'])
-        self.assertIsNone(cc.label)
+        self.assertIsNone(cc.context)
         eq(cc.info, [(0, -1, '', False)])
         eq(cc.topvisible, 1)
         eq(self.root.tk.call('after', 'info', self.cc.t1)[1], 'timer')
         eq(self.root.tk.call('after', 'info', self.cc.t2)[1], 'timer')
 
     def test_del(self):
-        self.root.tk.call('after', 'info', self.cc.t1)
-        self.root.tk.call('after', 'info', self.cc.t2)
         self.cc.__del__()
         with self.assertRaises(TclError) as msg:
             self.root.tk.call('after', 'info', self.cc.t1)
@@ -112,7 +107,9 @@ class CodeContextTest(unittest.TestCase):
 
     def test_reload(self):
         codecontext.CodeContext.reload()
-        self.assertEqual(self.cc.context_depth, 3)
+        self.assertEqual(self.cc.colors, {'background': 'lightgray',
+                                          'foreground': '#000000'})
+        self.assertEqual(self.cc.context_depth, 15)
 
     def test_toggle_code_context_event(self):
         eq = self.assertEqual
@@ -120,35 +117,20 @@ class CodeContextTest(unittest.TestCase):
         toggle = cc.toggle_code_context_event
 
         # Make sure code context is off.
-        if cc.label:
+        if cc.context:
             toggle()
 
         # Toggle on.
         eq(toggle(), 'break')
-        self.assertIsNotNone(cc.label)
-        eq(cc.label['font'], cc.textfont)
-        eq(cc.label['fg'], cc.fgcolor)
-        eq(cc.label['bg'], cc.bgcolor)
-        eq(cc.label['text'], '\n' * 2)
+        self.assertIsNotNone(cc.context)
+        eq(cc.context['font'], cc.textfont)
+        eq(cc.context['fg'], cc.colors['foreground'])
+        eq(cc.context['bg'], cc.colors['background'])
+        eq(cc.context.get('1.0', 'end-1c'), '')
 
         # Toggle off.
         eq(toggle(), 'break')
-        self.assertIsNone(cc.label)
-
-    def test_get_line_info(self):
-        eq = self.assertEqual
-        gli = self.cc.get_line_info
-
-        # Line 1 is not a BLOCKOPENER.
-        eq(gli(1), (codecontext.INFINITY, '', False))
-        # Line 2 is a BLOCKOPENER without an indent.
-        eq(gli(2), (0, 'class C1():', 'class'))
-        # Line 3 is not a BLOCKOPENER and does not return the indent level.
-        eq(gli(3), (codecontext.INFINITY, '    # Class comment.', False))
-        # Line 4 is a BLOCKOPENER and is indented.
-        eq(gli(4), (4, '    def __init__(self, a, b):', 'def'))
-        # Line 8 is a different BLOCKOPENER and is indented.
-        eq(gli(8), (8, '        if a > b:', 'if'))
+        self.assertIsNone(cc.context)
 
     def test_get_context(self):
         eq = self.assertEqual
@@ -202,7 +184,7 @@ class CodeContextTest(unittest.TestCase):
         eq = self.assertEqual
         cc = self.cc
         # Ensure code context is active.
-        if not cc.label:
+        if not cc.context:
             cc.toggle_code_context_event()
 
         # Invoke update_code_context without scrolling - nothing happens.
@@ -210,24 +192,26 @@ class CodeContextTest(unittest.TestCase):
         eq(cc.info, [(0, -1, '', False)])
         eq(cc.topvisible, 1)
 
+        # Scroll down to line 1.
+        cc.text.yview(1)
+        cc.update_code_context()
+        eq(cc.info, [(0, -1, '', False)])
+        eq(cc.topvisible, 2)
+        eq(cc.context.get('1.0', 'end-1c'), '')
+
         # Scroll down to line 2.
         cc.text.yview(2)
         cc.update_code_context()
         eq(cc.info, [(0, -1, '', False), (2, 0, 'class C1():', 'class')])
         eq(cc.topvisible, 3)
-        # context_depth is 3 so it pads with blank lines.
-        eq(cc.label['text'], '\n'
-                             '\n'
-                             'class C1():')
+        eq(cc.context.get('1.0', 'end-1c'), 'class C1():')
 
         # Scroll down to line 3.  Since it's a comment, nothing changes.
         cc.text.yview(3)
         cc.update_code_context()
         eq(cc.info, [(0, -1, '', False), (2, 0, 'class C1():', 'class')])
         eq(cc.topvisible, 4)
-        eq(cc.label['text'], '\n'
-                             '\n'
-                             'class C1():')
+        eq(cc.context.get('1.0', 'end-1c'), 'class C1():')
 
         # Scroll down to line 4.
         cc.text.yview(4)
@@ -236,8 +220,7 @@ class CodeContextTest(unittest.TestCase):
                      (2, 0, 'class C1():', 'class'),
                      (4, 4, '    def __init__(self, a, b):', 'def')])
         eq(cc.topvisible, 5)
-        eq(cc.label['text'], '\n'
-                             'class C1():\n'
+        eq(cc.context.get('1.0', 'end-1c'), 'class C1():\n'
                              '    def __init__(self, a, b):')
 
         # Scroll down to line 11.  Last 'def' is removed.
@@ -249,7 +232,8 @@ class CodeContextTest(unittest.TestCase):
                      (8, 8, '        if a > b:', 'if'),
                      (10, 8, '        elif a < b:', 'elif')])
         eq(cc.topvisible, 12)
-        eq(cc.label['text'], '    def compare(self):\n'
+        eq(cc.context.get('1.0', 'end-1c'), 'class C1():\n'
+                             '    def compare(self):\n'
                              '        if a > b:\n'
                              '        elif a < b:')
 
@@ -262,7 +246,8 @@ class CodeContextTest(unittest.TestCase):
                      (8, 8, '        if a > b:', 'if'),
                      (10, 8, '        elif a < b:', 'elif')])
         eq(cc.topvisible, 12)
-        eq(cc.label['text'], '    def compare(self):\n'
+        eq(cc.context.get('1.0', 'end-1c'), 'class C1():\n'
+                             '    def compare(self):\n'
                              '        if a > b:\n'
                              '        elif a < b:')
 
@@ -274,12 +259,45 @@ class CodeContextTest(unittest.TestCase):
                      (4, 4, '    def __init__(self, a, b):', 'def')])
         eq(cc.topvisible, 6)
         # context_depth is 1.
-        eq(cc.label['text'], '    def __init__(self, a, b):')
+        eq(cc.context.get('1.0', 'end-1c'), '    def __init__(self, a, b):')
+
+    def test_jumptoline(self):
+        eq = self.assertEqual
+        cc = self.cc
+        jump = cc.jumptoline
+
+        if not cc.context:
+            cc.toggle_code_context_event()
+
+        # Empty context.
+        cc.text.yview(f'{2}.0')
+        cc.update_code_context()
+        eq(cc.topvisible, 2)
+        cc.context.mark_set('insert', '1.5')
+        jump()
+        eq(cc.topvisible, 1)
+
+        # 4 lines of context showing.
+        cc.text.yview(f'{12}.0')
+        cc.update_code_context()
+        eq(cc.topvisible, 12)
+        cc.context.mark_set('insert', '3.0')
+        jump()
+        eq(cc.topvisible, 8)
+
+        # More context lines than limit.
+        cc.context_depth = 2
+        cc.text.yview(f'{12}.0')
+        cc.update_code_context()
+        eq(cc.topvisible, 12)
+        cc.context.mark_set('insert', '1.0')
+        jump()
+        eq(cc.topvisible, 8)
 
     @mock.patch.object(codecontext.CodeContext, 'update_code_context')
     def test_timer_event(self, mock_update):
         # Ensure code context is not active.
-        if self.cc.label:
+        if self.cc.context:
             self.cc.toggle_code_context_event()
         self.cc.timer_event()
         mock_update.assert_not_called()
@@ -289,42 +307,62 @@ class CodeContextTest(unittest.TestCase):
         self.cc.timer_event()
         mock_update.assert_called()
 
-    def test_font_timer_event(self):
+    def test_config_timer_event(self):
         eq = self.assertEqual
         cc = self.cc
         save_font = cc.text['font']
+        save_colors = codecontext.CodeContext.colors
         test_font = 'FakeFont'
+        test_colors = {'background': '#222222', 'foreground': '#ffff00'}
 
         # Ensure code context is not active.
-        if cc.label:
+        if cc.context:
             cc.toggle_code_context_event()
 
         # Nothing updates on inactive code context.
         cc.text['font'] = test_font
-        cc.font_timer_event()
+        codecontext.CodeContext.colors = test_colors
+        cc.config_timer_event()
         eq(cc.textfont, save_font)
+        eq(cc.contextcolors, save_colors)
 
-        # Activate code context, but no change to font.
+        # Activate code context, but no change to font or color.
         cc.toggle_code_context_event()
         cc.text['font'] = save_font
-        cc.font_timer_event()
+        codecontext.CodeContext.colors = save_colors
+        cc.config_timer_event()
         eq(cc.textfont, save_font)
-        eq(cc.label['font'], save_font)
+        eq(cc.contextcolors, save_colors)
+        eq(cc.context['font'], save_font)
+        eq(cc.context['background'], save_colors['background'])
+        eq(cc.context['foreground'], save_colors['foreground'])
 
         # Active code context, change font.
         cc.text['font'] = test_font
-        cc.font_timer_event()
+        cc.config_timer_event()
         eq(cc.textfont, test_font)
-        eq(cc.label['font'], test_font)
+        eq(cc.contextcolors, save_colors)
+        eq(cc.context['font'], test_font)
+        eq(cc.context['background'], save_colors['background'])
+        eq(cc.context['foreground'], save_colors['foreground'])
 
+        # Active code context, change color.
         cc.text['font'] = save_font
-        cc.font_timer_event()
+        codecontext.CodeContext.colors = test_colors
+        cc.config_timer_event()
+        eq(cc.textfont, save_font)
+        eq(cc.contextcolors, test_colors)
+        eq(cc.context['font'], save_font)
+        eq(cc.context['background'], test_colors['background'])
+        eq(cc.context['foreground'], test_colors['foreground'])
+        codecontext.CodeContext.colors = save_colors
+        cc.config_timer_event()
 
 
 class HelperFunctionText(unittest.TestCase):
 
-    def test_getspacesfirstword(self):
-        get = codecontext.getspacesfirstword
+    def test_get_spaces_firstword(self):
+        get = codecontext.get_spaces_firstword
         test_lines = (
             ('    first word', ('    ', 'first')),
             ('\tfirst word', ('\t', 'first')),
@@ -341,6 +379,24 @@ class HelperFunctionText(unittest.TestCase):
         self.assertEqual(get('    (continuation)',
                              c=re.compile(r'^(\s*)([^\s]*)')),
                          ('    ', '(continuation)'))
+
+    def test_get_line_info(self):
+        eq = self.assertEqual
+        gli = codecontext.get_line_info
+        lines = code_sample.splitlines()
+
+        # Line 1 is not a BLOCKOPENER.
+        eq(gli(lines[0]), (codecontext.INFINITY, '', False))
+        # Line 2 is a BLOCKOPENER without an indent.
+        eq(gli(lines[1]), (0, 'class C1():', 'class'))
+        # Line 3 is not a BLOCKOPENER and does not return the indent level.
+        eq(gli(lines[2]), (codecontext.INFINITY, '    # Class comment.', False))
+        # Line 4 is a BLOCKOPENER and is indented.
+        eq(gli(lines[3]), (4, '    def __init__(self, a, b):', 'def'))
+        # Line 8 is a different BLOCKOPENER and is indented.
+        eq(gli(lines[7]), (8, '        if a > b:', 'if'))
+        # Test tab.
+        eq(gli('\tif a == b:'), (1, '\tif a == b:', 'if'))
 
 
 if __name__ == '__main__':
