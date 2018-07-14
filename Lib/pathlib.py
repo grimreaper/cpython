@@ -1197,6 +1197,12 @@ class Path(PurePath):
         with self.open(mode='w', encoding=encoding, errors=errors) as f:
             return f.write(data)
 
+    def readlink(self):
+        """
+        Return the path to which the symbolic link points.
+        """
+        return self._accessor.readlink(self)
+
     def touch(self, mode=0o666, exist_ok=True):
         """
         Create this file with the given access mode, if it doesn't exist.
