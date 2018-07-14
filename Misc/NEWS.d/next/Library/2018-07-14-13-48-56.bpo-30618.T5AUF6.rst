@@ -1,0 +1,1 @@
+Add ``readlink()`` to ``pathlib.Path`` objects.  Patch by Girts Folkmanis.
