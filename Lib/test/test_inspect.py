@@ -1136,6 +1136,22 @@ class TestClassesAndFunctions(unittest.TestCase):
         attrs = [a[0] for a in inspect.getmembers(C)]
         self.assertNotIn('missing', attrs)
 
+    def test_getmembers_with_non_class(self):
+        from types import ModuleType
+        name = '__inspect_dummy'
+        m = ModuleType(name)
+        m.__bases__ = None
+        attrs = [a[0] for a in inspect.getmembers(m)]
+        self.assertIn('__bases__', attrs)
+
+        class CustomGetattr(object):
+            def __getattr__(self, attr):
+                return None
+
+        CustomGetattr.__test__ = None
+        attrs = [a[0] for a in inspect.getmembers(CustomGetattr())]
+        self.assertIn('__test__', attrs)
+
 class TestIsDataDescriptor(unittest.TestCase):
 
     def test_custom_descriptors(self):
