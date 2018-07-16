@@ -832,7 +832,6 @@ PyObject* pysqlite_connection_create_function(pysqlite_Connection* self, PyObjec
     }
     rc = sqlite3_create_function(self->db, name, narg, SQLITE_UTF8, (void*)func, _pysqlite_func_callback, NULL, NULL);
     if (rc != SQLITE_OK) {
-        PyDict_DelItem(self->function_pinboard, func);
         /* Workaround for SQLite bug: no error code or string is available here */
         PyErr_SetString(pysqlite_OperationalError, "Error creating function");
         return NULL;
@@ -863,7 +862,6 @@ PyObject* pysqlite_connection_create_aggregate(pysqlite_Connection* self, PyObje
     }
     rc = sqlite3_create_function(self->db, name, n_arg, SQLITE_UTF8, (void*)aggregate_class, 0, &_pysqlite_step_callback, &_pysqlite_final_callback);
     if (rc != SQLITE_OK) {
-        PyDict_DelItem(self->function_pinboard, aggregate_class);
         /* Workaround for SQLite bug: no error code or string is available here */
         PyErr_SetString(pysqlite_OperationalError, "Error creating aggregate");
         return NULL;
@@ -986,7 +984,6 @@ static PyObject* pysqlite_connection_set_authorizer(pysqlite_Connection* self, P
     }
     rc = sqlite3_set_authorizer(self->db, _authorizer_callback, (void*)authorizer_cb);
     if (rc != SQLITE_OK) {
-        PyDict_DelItem(self->function_pinboard, authorizer_cb);
         PyErr_SetString(pysqlite_OperationalError, "Error setting authorizer callback");
         return NULL;
     }
