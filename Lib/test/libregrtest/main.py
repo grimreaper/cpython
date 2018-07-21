@@ -17,7 +17,8 @@ from test.libregrtest.runtest import (
     INTERRUPTED, CHILD_ERROR,
     PROGRESS_MIN_TIME, format_test_result)
 from test.libregrtest.setup import setup_tests
-from test.libregrtest.utils import removepy, count, format_duration, printlist
+from test.libregrtest.utils import (
+    removepy, count, format_duration, printlist, WindowsLoadTracker)
 from test import support
 try:
     import gc
@@ -130,8 +131,8 @@ class Regrtest:
         line = f"[{line}] {test}"
 
         # add the system load prefix: "load avg: 1.80 "
-        if hasattr(os, 'getloadavg'):
-            load_avg_1min = os.getloadavg()[0]
+        if self.getloadavg:
+            load_avg_1min = self.getloadavg()
             line = f"load avg: {load_avg_1min:.2f} {line}"
 
         # add the timestamp prefix:  "0:01:05 "
@@ -532,6 +533,13 @@ class Regrtest:
 
     def _main(self, tests, kwargs):
         self.ns = self.parse_args(kwargs)
+
+        self.getloadavg = None
+        if hasattr(os, 'getloadavg'):
+            self.getloadavg = lambda: os.getloadavg()[0]
+        elif sys.platform == 'win32' and (self.ns.slaveargs is None):
+            load_tracker = WindowsLoadTracker()
+            self.getloadavg = load_tracker.getloadavg
 
         if self.ns.huntrleaks:
             warmup, repetitions, _ = self.ns.huntrleaks
