@@ -38,16 +38,19 @@ languages and symbols.
 A **character** is the smallest possible component of a text.  'A', 'B', 'C',
 etc., are all different characters.  So are 'È' and 'Í'.  Characters are
 abstractions, and vary depending on the language or context you're talking
-about.  For example, the symbol for ohms (Ω) is usually drawn much like the
-capital letter omega (Ω) in the Greek alphabet (they may even be the same in
-some fonts), but these are two different characters that have different
-meanings.
+about.  For example, there's a character for "Roman Numeral One" that's
+separate from the uppercase letter 'I'.  They'll usually look the same,
+but these are two different characters that have different meanings.
 
-The Unicode standard describes how characters are represented by **code
-points**.  A code point is an integer value, usually denoted in base 16.  In the
-standard, a code point is written using the notation ``U+12CA`` to mean the
-character with value ``0x12ca`` (4,810 decimal).  The Unicode standard contains
-a lot of tables listing characters and their corresponding code points:
+The Unicode standard describes how characters are represented by
+**code points**.  A code point value is an integer in the range 0 to
+over 0x10FFFF (about 1.1 million, with some 110 thousand assigned so
+far).  In the standard and in this document, a code point is written
+using the notation ``U+265E`` to mean the character with value
+``0x265e`` (9,822 in decimal).
+
+The Unicode standard contains a lot of tables listing characters and
+their corresponding code points:
 
 .. code-block:: none
 
@@ -56,10 +59,21 @@ a lot of tables listing characters and their corresponding code points:
    0063    'c'; LATIN SMALL LETTER C
    ...
    007B    '{'; LEFT CURLY BRACKET
+   ...
+   2167    'Ⅶ ': ROMAN NUMERAL EIGHT
+   2168    'Ⅸ': ROMAN NUMERAL NINE
+   ...
+   265E    '♞': BLACK CHESS KNIGHT
+   265F    '♟': BLACK CHESS PAWN
+   ...
+   1F600   '😀': GRINNING FACE
+   1F609   '😉': WINKING FACE
+   ...
 
 Strictly, these definitions imply that it's meaningless to say 'this is
-character ``U+12CA``'.  ``U+12CA`` is a code point, which represents some particular
-character; in this case, it represents the character 'ETHIOPIC SYLLABLE WI'.  In
+character ``U+265E``'.  ``U+265E`` is a code point, which represents some particular
+character; in this case, it represents the character 'BLACK CHESS KNIGHT',
+'♞'.  In
 informal contexts, this distinction between code points and characters will
 sometimes be forgotten.
 
@@ -680,4 +694,4 @@ Andrew Kuchling, and Ezio Melotti.
 Thanks to the following people who have noted errors or offered
 suggestions on this article: Éric Araujo, Nicholas Bastin, Nick
 Coghlan, Marius Gedminas, Kent Johnson, Ken Krugler, Marc-André
-Lemburg, Martin von Löwis, Terry J. Reedy, Chad Whitacre.
+Lemburg, Martin von Löwis, Terry J. Reedy, Chad Whitacre, Graham Wideman.
