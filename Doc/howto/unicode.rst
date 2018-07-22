@@ -119,30 +119,14 @@ problems.
 3. It's not compatible with existing C functions such as ``strlen()``, so a new
    family of wide string functions would need to be used.
 
-Generally people don't use this encoding, instead choosing other
-encodings that are more efficient and convenient.  UTF-8 is probably
-the most commonly supported encoding; it will be discussed below.
+Therefore this encoding isn't used very much, and people instead choose other
+encodings that are more efficient and convenient, such as UTF-8.
 
-Encodings don't have to handle every possible Unicode character, and most
-encodings don't.  The rules for converting a Unicode string into the ASCII
-encoding, for example, are simple; for each code point:
-
-1. If the code point is < 128, each code unit is the same as the value of the code
-   point.
-
-2. If the code point is 128 or greater, the Unicode string can't be represented
-   in this encoding.  (Python raises a :exc:`UnicodeEncodeError` exception in this
-   case.)
-
-Latin-1, also known as ISO-8859-1, is a similar encoding.  Unicode code points
-0--255 are identical to the Latin-1 values, so converting to this encoding simply
-requires converting code points to byte values; if a code point larger than 255
-is encountered, the string can't be encoded into Latin-1.
-
-UTF-8 is one of the most commonly used encodings.  UTF stands for "Unicode
-Transformation Format", and the '8' means that 8-bit numbers are used in the
-encoding.  (There are also a UTF-16 and UTF-32 encodings, but they are less
-frequently used than UTF-8.)  UTF-8 uses the following rules:
+UTF-8 is one of the most commonly used encodings, and Python often
+defaults to using it.  UTF stands for "Unicode Transformation Format",
+and the '8' means that 8-bit numbers are used in the encoding.  (There
+are also a UTF-16 and UTF-32 encodings, but they are less frequently
+used than UTF-8.)  UTF-8 uses the following rules:
 
 1. If the code point is < 128, it's represented by the corresponding byte value.
 2. If the code point is >= 128, it's turned into a sequence of two, three, or
