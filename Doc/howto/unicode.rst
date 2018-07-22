@@ -195,7 +195,7 @@ Unicode features.
 The String Type
 ---------------
 
-Since Python 3.0, the language features a :class:`str` type that contain Unicode
+Since Python 3.0, the language's :class:`str` type contains Unicode
 characters, meaning any string created using ``"unicode rocks!"``, ``'unicode
 rocks!'``, or the triple-quoted string syntax is stored as Unicode.
 
@@ -208,11 +208,6 @@ include a Unicode character in a string literal::
    except OSError:
        # 'File not found' error message.
        print("Fichier non trouvé")
-
-You can use a different encoding from UTF-8 by putting a specially-formatted
-comment as the first or second line of the source code::
-
-   # -*- coding: <encoding name> -*-
 
 Side note: Python 3 also supports using Unicode characters in identifiers::
 
@@ -256,7 +251,7 @@ The following examples show the differences::
     >>> b'\x80abc'.decode("utf-8", "ignore")
     'abc'
 
-Encodings are specified as strings containing the encoding's name.  Python 3.2
+Encodings are specified as strings containing the encoding's name.  Python
 comes with roughly 100 different encodings; see the Python Library Reference at
 :ref:`standard-encodings` for a list.  Some encodings have multiple names; for
 example, ``'latin-1'``, ``'iso_8859_1'`` and ``'8859``' are all synonyms for
@@ -366,12 +361,13 @@ already mentioned.  See also :pep:`263` for more information.
 Unicode Properties
 ------------------
 
-The Unicode specification includes a database of information about code points.
-For each defined code point, the information includes the character's
-name, its category, the numeric value if applicable (Unicode has characters
-representing the Roman numerals and fractions such as one-third and
-four-fifths).  There are also properties related to the code point's use in
-bidirectional text and other display-related properties.
+The Unicode specification includes a database of information about
+code points.  For each defined code point, the information includes
+the character's name, its category, the numeric value if applicable
+(for characters representing numeric concepts such as the Roman
+numerals, fractions such as one-third and four-fifths, etc.).  There
+are also display-related properties, such as how to use the code point
+in bidirectional text.
 
 The following program displays some information about several characters, and
 prints the numeric value of one particular character::
@@ -524,9 +520,8 @@ particular byte ordering and don't skip the BOM.
 
 In some areas, it is also convention to use a "BOM" at the start of UTF-8
 encoded files; the name is misleading since UTF-8 is not byte-order dependent.
-The mark simply announces that the file is encoded in UTF-8.  Use the
-'utf-8-sig' codec to automatically skip the mark if present for reading such
-files.
+The mark simply announces that the file is encoded in UTF-8.  For reading such
+files, use the 'utf-8-sig' codec to automatically skip the mark if present.
 
 
 Unicode filenames
@@ -535,7 +530,7 @@ Unicode filenames
 Most of the operating systems in common use today support filenames that contain
 arbitrary Unicode characters.  Usually this is implemented by converting the
 Unicode string into some encoding that varies depending on the system.  For
-example, Mac OS X uses UTF-8 while Windows uses a configurable encoding; on
+example, Mac OS X uses UTF-8.  Windows uses a configurable encoding; on
 Windows, Python uses the name "mbcs" to refer to whatever the currently
 configured encoding is.  On Unix systems, there will only be a filesystem
 encoding if you've set the ``LANG`` or ``LC_CTYPE`` environment variables; if
@@ -554,9 +549,9 @@ automatically converted to the right encoding for you::
 Functions in the :mod:`os` module such as :func:`os.stat` will also accept Unicode
 filenames.
 
-The :func:`os.listdir` function returns filenames and raises an issue: should it return
+The :func:`os.listdir` function returns filenames, which raises an issue: should it return
 the Unicode version of filenames, or should it return bytes containing
-the encoded versions?  :func:`os.listdir` will do both, depending on whether you
+the encoded versions?  :func:`os.listdir` can do both, depending on whether you
 provided the directory path as bytes or a Unicode string.  If you pass a
 Unicode string as the path, filenames will be decoded using the filesystem's
 encoding and a list of Unicode strings will be returned, while passing a byte
