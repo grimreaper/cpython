@@ -105,9 +105,6 @@ problems.
 3. It's not compatible with existing C functions such as ``strlen()``, so a new
    family of wide string functions would need to be used.
 
-4. Many Internet standards are defined in terms of textual data, and can't
-   handle content with embedded zero bytes.
-
 Generally people don't use this encoding, instead choosing other
 encodings that are more efficient and convenient.  UTF-8 is probably
 the most commonly supported encoding; it will be discussed below.
