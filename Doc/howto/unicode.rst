@@ -124,8 +124,8 @@ encodings that are more efficient and convenient, such as UTF-8.
 
 UTF-8 is one of the most commonly used encodings, and Python often
 defaults to using it.  UTF stands for "Unicode Transformation Format",
-and the '8' means that 8-bit numbers are used in the encoding.  (There
-are also a UTF-16 and UTF-32 encodings, but they are less frequently
+and the '8' means that 8-bit values are used in the encoding.  (There
+are also UTF-16 and UTF-32 encodings, but they are less frequently
 used than UTF-8.)  UTF-8 uses the following rules:
 
 1. If the code point is < 128, it's represented by the corresponding byte value.
@@ -388,6 +388,91 @@ other".  See
 list of category codes.
 
 
+Lowercasing Strings
+-------------------
+
+The string :meth:`~str.casefold` method converts a string to lowercase
+following an algorithm described by the Unicode Standard.
+Case-folding rules can be complicated: for example, the German letter
+'ß' (code point U+00DF) becomes the pair of
+lowercase letters 'ss'.
+
+::
+
+    >>> street = 'Gürzenichstraße'
+    >>> street.casefold()
+    'gürzenichstrasse'
+
+You might be accustomed to using the :meth:`~str.lower` method for
+this, but :meth:`~str.lower` uses a set of locale-specific conversions
+and may get the answer wrong, depending on your configured locale.
+
+
+Comparing Strings
+-----------------
+
+Unicode adds some complication to comparing strings, because the same
+set of characters can be represented by different sequences of code
+points.  For example, a letter like 'ê' can be represented as a single
+code point U+00EA, or as U+0065 U+0302, which is the code point for
+'e' followed by a code point for 'COMBINING CIRCUMFLEX ACCENT'.  These
+will produce the same output when printed, but one is a string of
+length 1 and the other is of length 2.
+
+The :mod:`unicodedata` module contains a
+:func:`~unicodedata.normalize` function that converts strings to one
+of several normal forms, where the string is rewritten to replace
+letters followed by a combining character with single characters.
+
+::
+
+    import unicodedata
+
+    def compare_strs(s1, s2):
+        def NFD(s):
+	    return unicodedata.normalize('NFD', s)
+
+	return NFD(s1) == NFD(s2)
+
+    single_char = 'ê'
+    multiple_chars = '\N{LATIN SMALL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}'
+    print('length of first string=', len(single_char))
+    print('length of second string=', len(multiple_chars))
+    print(compare_strs(single_char, multiple_chars))
+
+When run, this outputs::
+
+    -> python3 compare-strs.py
+    length of first string= 1
+    length of second string= 2
+    True
+
+The first argument to the  :func:`~unicodedata.normalize` function is a
+string giving the desired normalization form, which can be one of
+'NFC', 'NFKC', 'NFD', and 'NFKD'.
+
+The Unicode Standard also specifies how to do caseless comparisons::
+
+    import unicodedata
+
+    def compare_caseless(s1, s2):
+	def NFD(s):
+	    return unicodedata.normalize('NFD', s)
+
+        return NFD(NFD(s1).casefold()) == NFD(NFD(s2).casefold())
+
+    # Example usage
+    single_char = 'ê'
+    multiple_chars = '\N{LATIN CAPITAL LETTER E}\N{COMBINING CIRCUMFLEX ACCENT}'
+
+    print(compare_caseless(single_char, multiple_chars))
+
+This will print ``True``.  (Why is :func:`NFD` invoked twice?  Because
+there are a few characters that make :meth:`casefold` return a
+non-normalized string, so the result needs to be normalized again. See
+section 3.13 of the Unicode Standard for a discussion and an example.)
+
+
 Unicode Regular Expressions
 ---------------------------
 
@@ -555,7 +640,7 @@ will produce the following output:
 
 .. code-block:: shell-session
 
-   amk:~$ python t.py
+   amk:~$ python listdir-test.py
    [b'filename\xe4\x94\x80abc', ...]
    ['filename\u4500abc', ...]
 
