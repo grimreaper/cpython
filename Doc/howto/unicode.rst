@@ -85,14 +85,17 @@ toolkit or a terminal's font renderer.
 Encodings
 ---------
 
-To summarize the previous section: a Unicode string is a sequence of code
-points, which are numbers from 0 through ``0x10FFFF`` (1,114,111 decimal).  This
-sequence needs to be represented as a set of bytes (meaning, values
-from 0 through 255) in memory.  The rules for translating a Unicode string
-into a sequence of bytes are called an **encoding**.
+To summarize the previous section: a Unicode string is a sequence of
+code points, which are numbers from 0 through ``0x10FFFF`` (1,114,111
+decimal).  This sequence of code points needs to be represented in
+memory as a set of **code units**, and **code units** are then mapped
+to 8-bit bytes.  The rules for translating a Unicode string into a
+sequence of bytes are called a **character encoding**, or just
+an **encoding**.
 
-The first encoding you might think of is an array of 32-bit integers.  In this
-representation, the string "Python" would look like this:
+The first encoding you might think of is using 32-bit integers as the
+code unit, and then using the CPU's representation of 32-bit integers.
+In this representation, the string "Python" might look like this:
 
 .. code-block:: none
 
@@ -124,7 +127,7 @@ Encodings don't have to handle every possible Unicode character, and most
 encodings don't.  The rules for converting a Unicode string into the ASCII
 encoding, for example, are simple; for each code point:
 
-1. If the code point is < 128, each byte is the same as the value of the code
+1. If the code point is < 128, each code unit is the same as the value of the code
    point.
 
 2. If the code point is 128 or greater, the Unicode string can't be represented
@@ -135,14 +138,6 @@ Latin-1, also known as ISO-8859-1, is a similar encoding.  Unicode code points
 0--255 are identical to the Latin-1 values, so converting to this encoding simply
 requires converting code points to byte values; if a code point larger than 255
 is encountered, the string can't be encoded into Latin-1.
-
-Encodings don't have to be as simple as just excluding values over a
-certain limit.  Consider IBM's EBCDIC, which was used on IBM
-mainframes.  Letter values weren't in one block: 'a' through 'i' had
-values from 129 to 137, but 'j' through 'r' were 145 through 153.  If
-you wanted to use EBCDIC as an encoding, you'd probably use some sort
-of lookup table to perform the conversion, but this is largely an
-internal detail.
 
 UTF-8 is one of the most commonly used encodings.  UTF stands for "Unicode
 Transformation Format", and the '8' means that 8-bit numbers are used in the
