@@ -17,34 +17,31 @@ Introduction to Unicode
 Definitions
 -----------
 
-Early computers often had limited repertoires of characters.  A
-machine might have had 7-bit characters, for example, allowing 128
-different values.  128 values is enough to hold the uppercase and
-lowercase Latin alphabet, numbers, various punctuation marks, and some
-control characters, but it's not enough to include the accented
-characters used in Western Europe and the Cyrillic alphabet used for
-Russian.
-
-Today's programs need to be able to handle a wider variety of
+Today's programs need to be able to handle a wide variety of
 characters.  Applications are often internationalized to display
 messages and output in a variety of user-selectable languages; the
 same program might need to output an error message in English, French,
 Japanese, Hebrew, or Russian.  Web content can be written in any of
-these languages and can also include a variety of emoji symbols.  The
-solution has been to use Unicode for representing text.  The Unicode
-specifications are continually revised and updated to add new
-languages and symbols.
+these languages and can also include a variety of emoji symbols.
+Python's string type uses the Unicode Standard for representing
+characters, which lets Python programs work with all these different
+possible characters.
+
+Unicode (https://www.unicode.org/) is a specification that aims to
+list every character used by human languages and give each character
+its own unique code.  The Unicode specifications are continually
+revised and updated to add new languages and symbols.
 
 A **character** is the smallest possible component of a text.  'A', 'B', 'C',
-etc., are all different characters.  So are 'È' and 'Í'.  Characters are
-abstractions, and vary depending on the language or context you're talking
-about.  For example, there's a character for "Roman Numeral One" that's
+etc., are all different characters.  So are 'È' and 'Í'.  Characters vary
+depending on the language or context you're talking
+about.  For example, there's a character for "Roman Numeral One", 'Ⅰ', that's
 separate from the uppercase letter 'I'.  They'll usually look the same,
 but these are two different characters that have different meanings.
 
 The Unicode standard describes how characters are represented by
 **code points**.  A code point value is an integer in the range 0 to
-over 0x10FFFF (about 1.1 million, with some 110 thousand assigned so
+0x10FFFF (about 1.1 million values, with some 110 thousand assigned so
 far).  In the standard and in this document, a code point is written
 using the notation ``U+265E`` to mean the character with value
 ``0x265e`` (9,822 in decimal).
@@ -139,11 +136,12 @@ Latin-1, also known as ISO-8859-1, is a similar encoding.  Unicode code points
 requires converting code points to byte values; if a code point larger than 255
 is encountered, the string can't be encoded into Latin-1.
 
-Encodings don't have to be simple one-to-one mappings like Latin-1.  Consider
-IBM's EBCDIC, which was used on IBM mainframes.  Letter values weren't in one
-block: 'a' through 'i' had values from 129 to 137, but 'j' through 'r' were 145
-through 153.  If you wanted to use EBCDIC as an encoding, you'd probably use
-some sort of lookup table to perform the conversion, but this is largely an
+Encodings don't have to be as simple as just excluding values over a
+certain limit.  Consider IBM's EBCDIC, which was used on IBM
+mainframes.  Letter values weren't in one block: 'a' through 'i' had
+values from 129 to 137, but 'j' through 'r' were 145 through 153.  If
+you wanted to use EBCDIC as an encoding, you'd probably use some sort
+of lookup table to perform the conversion, but this is largely an
 internal detail.
 
 UTF-8 is one of the most commonly used encodings.  UTF stands for "Unicode
