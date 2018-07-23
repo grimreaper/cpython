@@ -44,7 +44,8 @@ are always available.  They are listed here in alphabetical order.
 
    Return the absolute value of a number.  The argument may be an
    integer or a floating point number.  If the argument is a complex number, its
-   magnitude is returned.
+   magnitude is returned. If *x* defines :meth:`__abs__`,
+   ``abs(x)`` returns ``x.__abs__()``.
 
 
 .. function:: all(iterable)
@@ -240,8 +241,8 @@ are always available.  They are listed here in alphabetical order.
    interactive statement (in the latter case, expression statements that
    evaluate to something other than ``None`` will be printed).
 
-   The optional arguments *flags* and *dont_inherit* control which future
-   statements (see :pep:`236`) affect the compilation of *source*.  If neither
+   The optional arguments *flags* and *dont_inherit* control which :ref:`future
+   statements <future>` affect the compilation of *source*.  If neither
    is present (or both are zero) the code is compiled with those future
    statements that are in effect in the code that is calling :func:`compile`.  If the
    *flags* argument is given and *dont_inherit* is not (or is zero) then the
