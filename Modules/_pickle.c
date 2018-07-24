@@ -2493,19 +2493,32 @@ save_picklebuffer(PicklerObject *self, PyObject *obj)
     if (view == NULL) {
         return -1;
     }
+    int in_band = 1;
     if (self->buffer_callback != NULL) {
-        /* Write data out-of-band */
-        PyObject *lst = Py_BuildValue("[O]", obj);
-        if (lst == NULL) {
-            return -1;
-        }
         PyObject *ret = PyObject_CallFunctionObjArgs(self->buffer_callback,
-                                                     lst, NULL);
-        Py_DECREF(lst);
+                                                     obj, NULL);
         if (ret == NULL) {
             return -1;
         }
+        in_band = PyObject_IsTrue(ret);
         Py_DECREF(ret);
+        if (in_band == -1) {
+            return -1;
+        }
+    }
+    if (in_band) {
+        /* Write data in-band */
+        if (view->readonly) {
+            return _save_bytes_data(self, obj, (const char*) view->buf,
+                                    view->len);
+        }
+        else {
+            return _save_bytearray_data(self, obj, (const char*) view->buf,
+                                        view->len);
+        }
+    }
+    else {
+        /* Write data out-of-band */
         const char next_buffer_op = NEXT_BUFFER;
         if (_Pickler_Write(self, &next_buffer_op, 1) < 0) {
             return -1;
@@ -2515,17 +2528,6 @@ save_picklebuffer(PicklerObject *self, PyObject *obj)
             if (_Pickler_Write(self, &readonly_buffer_op, 1) < 0) {
                 return -1;
             }
-        }
-    }
-    else {
-        /* Write data in-band */
-        if (view->readonly) {
-            return _save_bytes_data(self, obj, (const char*) view->buf,
-                                    view->len);
-        }
-        else {
-            return _save_bytearray_data(self, obj, (const char*) view->buf,
-                                        view->len);
         }
     }
     return 0;
