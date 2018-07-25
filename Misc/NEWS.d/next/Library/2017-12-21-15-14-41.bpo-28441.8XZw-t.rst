@@ -1,0 +1,3 @@
+On platforms that have an executable suffix (such as ``.exe`` on
+Windows/Cygwin), ensure that ``sys.executable`` always includes the
+executable suffix (unless it is a symbolic link).
