@@ -17,8 +17,7 @@ from test.libregrtest.runtest import (
     INTERRUPTED, CHILD_ERROR,
     PROGRESS_MIN_TIME, format_test_result)
 from test.libregrtest.setup import setup_tests
-from test.libregrtest.utils import (
-    removepy, count, format_duration, printlist, WindowsLoadTracker)
+from test.libregrtest.utils import removepy, count, format_duration, printlist
 from test import support
 try:
     import gc
@@ -536,8 +535,12 @@ class Regrtest:
 
         self.getloadavg = None
         if hasattr(os, 'getloadavg'):
-            self.getloadavg = lambda: os.getloadavg()[0]
+            def getloadavg1m():
+                return os.getloadavg()[0]
+            self.getloadavg = getloadavg1m
         elif sys.platform == 'win32' and (self.ns.slaveargs is None):
+            from test.libregrtest.win_utils import WindowsLoadTracker
+
             load_tracker = WindowsLoadTracker()
             self.getloadavg = load_tracker.getloadavg
 
